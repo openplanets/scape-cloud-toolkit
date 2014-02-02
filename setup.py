@@ -39,6 +39,7 @@ setup(
     keywords="jsonrpc2 rpc",
     url="http://www.scape-project.eu/",
     package_dir={'': srcdir},
+    package_data={'':['data/*.yaml']},
     packages=["sct", ],
     long_description=read( 'README.rst' ),
     classifiers=[

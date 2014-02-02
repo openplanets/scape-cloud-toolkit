@@ -20,6 +20,11 @@ limitations under the License.
 '''
 
 import argparse
+import logging
+import os
+import sys
+import pkg_resources
+from logging.config import dictConfig
 from sct.config import CONFIG_FILE, argparse_euca_helper
 from sct.config import ConfigFile
 from sct.cloud import CloudController
@@ -66,6 +71,9 @@ def main ():
                          type=str,
                          default=CONFIG_FILE,
                          help="Specify the config file" )
+    parser.add_argument( '--verbose', '-v', action='count', default=None,
+                         help="The verbosity level. More v's means more logging" )
+    parser.add_argument( '--logging-config', type=str, default=None, help="Alternate logging config file. (YAML)" )
     subparsers = parser.add_subparsers( title='Subcommands',
                                         description='valid subcommands',
                                         help='' )
@@ -94,8 +102,35 @@ def main ():
     euca_test_parser = euca_subparsers.add_parser( "test" )
 
 
-
     ###### Handle
     args = parser.parse_args( )
+
+    # Setup logging
+    import yaml
+
+    if args.logging_config is None:
+        logging_config_stream = pkg_resources.resource_stream( __name__, "logging.yaml" )
+        with logging_config_stream:
+            loggingDict = yaml.load( logging_config_stream )
+        if loggingDict is None:
+            raise RuntimeError( "Failed to find valid logging config file at expected location" )
+        if 'version' not in loggingDict:
+            loggingDict['version'] = 1
+
+        if args.verbose is not None:
+            if args.verbose > 4:
+                log_level = 10
+            else:
+                log_level = 50 - args.verbose * 10
+            loggingDict["handlers"]["console"]["level"] = log_level
+    else:
+        if not os.path.exists( args.logging_config ):
+            print >> sys.stderr, "Could not find alternate logging file at: %s" % args.logging_config
+            sys.exit( 1 )
+        with open( args.logging_config ) as f:
+            loggingDict = yaml.load( f )
+
+    dictConfig( loggingDict )
+
     if hasattr( args, 'func' ):
         args.func( args )
