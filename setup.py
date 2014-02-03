@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Copyright 2014 Universitatea de Vest din Timișoara
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,7 @@ limitations under the License.
 @author: Marian Neagul <marian@info.uvt.ro>
 @contact: marian@info.uvt.ro
 @copyright: 2014 Universitatea de Vest din Timișoara
-'''
+"""
 
 import os
 from setuptools import setup
@@ -39,7 +39,7 @@ setup(
     keywords="jsonrpc2 rpc",
     url="http://www.scape-project.eu/",
     package_dir={'': srcdir},
-    package_data={'':['data/*.yaml']},
+    package_data={'': ['data/*.yaml']},
     packages=["sct", ],
     long_description=read( 'README.rst' ),
     classifiers=[

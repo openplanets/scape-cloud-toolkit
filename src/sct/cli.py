@@ -20,11 +20,13 @@ limitations under the License.
 '''
 
 import argparse
-import logging
 import os
 import sys
-import pkg_resources
 from logging.config import dictConfig
+
+import yaml
+import pkg_resources
+
 from sct.config import CONFIG_FILE, argparse_euca_helper
 from sct.config import ConfigFile
 from sct.cloud import CloudController
@@ -42,15 +44,22 @@ class ControllerWrapper( object ):
 
             if not hasattr( self.klassInst, item ):
                 raise NameError( "Name %s is not defined" % item )
-            func = getattr( self.klassInst, item )
+            inner_func = getattr( self.klassInst, item )
 
             def __wrapper (args):
+                passed_args = {}
+                for arg in dir( args ):
+                    if arg.startswith( "_" ) or callable( getattr( args, arg ) ):
+                        continue
+                    passed_args[arg] = getattr( args, arg )
+
                 cfg.load_config( args.config_file )
                 self.klassInst.init( )
                 if args.disable_ssl_check:
                     self.klassInst.disable_ssl_check( )
-                func( args )
+                result = inner_func( **passed_args )
                 cfg.store_config( args.config_file )
+                yaml.dump( result, sys.stdout, default_flow_style=False )
 
             return __wrapper
 
@@ -79,7 +88,7 @@ def main ():
                                         help='' )
     cloud_config_parser = subparsers.add_parser( 'cloud-config' )
     cloud_info_parser = subparsers.add_parser( 'cloud-info', help="Set Cloud Configuration Params" )
-    cloud_info_parser.set_defaults(func=cfg.get_config_handler("info"))
+    cloud_info_parser.set_defaults( func=cfg.get_config_handler( "info" ) )
     euca_parser = subparsers.add_parser( 'euca' )
 
     ############## Cloud Config #################
@@ -87,7 +96,7 @@ def main ():
                                                                   description="Valid subcomands",
                                                                   help="Valid subconfiguration commands" )
     euca_config_parser = cloud_config_subparsers.add_parser( 'euca' )
-    registry_config_parser = cloud_config_subparsers.add_parser('registry')
+    registry_config_parser = cloud_config_subparsers.add_parser( 'registry' )
 
     euca_config_parser.add_argument( "--autodetect",
                                      action="store_true",
@@ -95,16 +104,61 @@ def main ():
     argparse_euca_helper( euca_config_parser )
     euca_config_parser.set_defaults( func=cfg.get_config_handler( 'euca' ) )
 
-    registry_config_parser.add_argument("configs", metavar="entry", type=str, nargs='+', default=[], help="Configuration Entry (key=value)")
-    registry_config_parser.set_defaults (func=cfg.get_config_handler("registry"))
+    registry_config_parser.add_argument( "configs", metavar="entry", type=str, nargs='+', default=[],
+                                         help="Configuration Entry (key=value)" )
+    registry_config_parser.set_defaults( func=cfg.get_config_handler( "registry" ) )
 
     ############# Euca Commands ##################
     euca_parser.add_argument( "--disable-ssl-check", "-S", action="store_true", default=False )
     euca_subparsers = euca_parser.add_subparsers( title="Subcommands" )
+
     euca_list_nodes_parser = euca_subparsers.add_parser( "list-nodes" )
     euca_list_nodes_parser.set_defaults( func=cc.list_nodes( cfg ) )
-    euca_create_node_parser = euca_subparsers.add_parser( "add-node" )
+
+    euca_list_images_parser = euca_subparsers.add_parser( "list-images" )
+    euca_list_images_parser.set_defaults( func=cc.list_images( cfg ) )
+
+    euca_list_sizes_parser = euca_subparsers.add_parser( "list-sizes" )
+    euca_list_sizes_parser.set_defaults( func=cc.list_sizes( cfg ) )
+
+    euca_create_node_parser = euca_subparsers.add_parser( "create-node" )
+    euca_create_node_parser.add_argument( "--image", type=str, required=True, help="Image used for creating the node" )
+    euca_create_node_parser.add_argument( "--size", type=str, required=True, help="Size used for the created image" )
+    euca_create_node_parser.add_argument( "--name", type=str, required=True, help="Name for the new node" )
     euca_create_node_parser.set_defaults( func=cc.create_node( cfg ) )
+
+    euca_create_security_group = euca_subparsers.add_parser( "create-security-group" )
+    euca_create_security_group.add_argument( "--name", type=str, required=True, help="Name of the security group" )
+    euca_create_security_group.add_argument( "--description", type=str, required=False,
+                                             help="Description of the security group" )
+    euca_create_security_group.set_defaults( func=cc.create_security_group( cfg ) )
+
+    euca_delete_security_group = euca_subparsers.add_parser( "delete-security-group" )
+    euca_delete_security_group.add_argument( "--name", type=str, required=True, help="Name of the security group" )
+    euca_delete_security_group.set_defaults( func=cc.delete_security_group( cfg ) )
+
+    euca_list_security_groups = euca_subparsers.add_parser( "list-security-groups" )
+    euca_list_security_groups.set_defaults( func=cc.list_security_groups( cfg ) )
+
+    euca_authorize_security_groups = euca_subparsers.add_parser( "authorize-security-group" )
+    euca_authorize_security_groups.add_argument( "--name", type=str, required=True, help="Name of the security group" )
+    euca_authorize_security_groups.add_argument( "--from-port", type=int, required=True,
+                                                 help="Starting port of the rule" )
+    euca_authorize_security_groups.add_argument( "--to-port", type=int, required=False, help="End port of the rule" )
+    euca_authorize_security_groups.add_argument( "--cidr-ip", type=str, required=False, default="0.0.0.0/0",
+                                                 help="Allow traffic for this IP address. Default 0.0.0.0/0" )
+    euca_authorize_security_groups.add_argument( "--protocol", type=str, choices=("tcp", "udp", "icmp"), default="tcp",
+                                                 help="Applicable protocol" )
+    euca_authorize_security_groups.set_defaults( func=cc.authorize_security_group( cfg ) )
+
+    euca_list_addresses = euca_subparsers.add_parser( "list-addresses" )
+    euca_list_addresses.add_argument( "--associated", action="store_true", default=False,
+                                      help="Show only associated addresses" )
+    euca_list_addresses.set_defaults( func=cc.list_addresses( cfg ) )
+
+    euca_list_addresses = euca_subparsers.add_parser( "list-available-addresses" )
+    euca_list_addresses.set_defaults( func=cc.list_available_addresses( cfg ) )
+
     euca_test_parser = euca_subparsers.add_parser( "test" )
 
 
