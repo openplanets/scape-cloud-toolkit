@@ -79,6 +79,7 @@ def main ():
                                         help='' )
     cloud_config_parser = subparsers.add_parser( 'cloud-config' )
     cloud_info_parser = subparsers.add_parser( 'cloud-info', help="Set Cloud Configuration Params" )
+    cloud_info_parser.set_defaults(func=cfg.get_config_handler("info"))
     euca_parser = subparsers.add_parser( 'euca' )
 
     ############## Cloud Config #################
@@ -86,11 +87,16 @@ def main ():
                                                                   description="Valid subcomands",
                                                                   help="Valid subconfiguration commands" )
     euca_config_parser = cloud_config_subparsers.add_parser( 'euca' )
+    registry_config_parser = cloud_config_subparsers.add_parser('registry')
+
     euca_config_parser.add_argument( "--autodetect",
                                      action="store_true",
                                      help="Autodetect eucalyptus settings" )
     argparse_euca_helper( euca_config_parser )
     euca_config_parser.set_defaults( func=cfg.get_config_handler( 'euca' ) )
+
+    registry_config_parser.add_argument("configs", metavar="entry", type=str, nargs='+', default=[], help="Configuration Entry (key=value)")
+    registry_config_parser.set_defaults (func=cfg.get_config_handler("registry"))
 
     ############# Euca Commands ##################
     euca_parser.add_argument( "--disable-ssl-check", "-S", action="store_true", default=False )
@@ -98,7 +104,7 @@ def main ():
     euca_list_nodes_parser = euca_subparsers.add_parser( "list-nodes" )
     euca_list_nodes_parser.set_defaults( func=cc.list_nodes( cfg ) )
     euca_create_node_parser = euca_subparsers.add_parser( "add-node" )
-    euca_create_node_parser.set_defaults( func=cc.add_node( cfg ) )
+    euca_create_node_parser.set_defaults( func=cc.create_node( cfg ) )
     euca_test_parser = euca_subparsers.add_parser( "test" )
 
 
@@ -131,6 +137,5 @@ def main ():
             loggingDict = yaml.load( f )
 
     dictConfig( loggingDict )
-
     if hasattr( args, 'func' ):
         args.func( args )

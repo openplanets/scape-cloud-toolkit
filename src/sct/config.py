@@ -20,7 +20,9 @@ limitations under the License.
 '''
 
 import os
+import sys
 import yaml
+import logging
 from os.path import expanduser, join
 
 CONFIG_FILE = join( expanduser( "~" ), ".sct_config" )
@@ -59,6 +61,7 @@ def argparse_euca_helper (parse):
 
 
 class ConfigFile( object ):
+    log = logging.getLogger("ConfigFile")
     def __init__ (self):
         self.config = {}
         self.loaded = False
@@ -135,6 +138,24 @@ class ConfigFile( object ):
                 value = f.read( )
             config[key] = value
 
+    def handle_config_info(self, args):
+        yaml.dump(self.config, sys.stdout, default_flow_style=False, default_style='|')
+
+    def handle_config_registry (self, args):
+        config_registry = {}
+        if 'config' in self.config:
+            config_registry = self.config['config']
+        else:
+            self.log.debug("Creating missing config registry")
+            self.config['config'] = config_registry
+        for cfg_entry in args.configs:
+            key, value = cfg_entry.split("=")
+            if key in config_registry:
+                old_value = config_registry[key]
+                self.log.info("Updating key %s (%s) with %s", key, old_value, value)
+            config_registry[key] = value
+
+
 
     def get_config_handler (self, section):
         hndlr_name = "handle_config_%s" % section
@@ -142,10 +163,8 @@ class ConfigFile( object ):
 
         if hndlr is None:
             raise NotImplementedError( "Undefined config handler for section: %s", section )
-
         def _handler_wrapper (args):
             self.load_config( args.config_file )
             hndlr( args )
             self.store_config( args.config_file )
-
         return _handler_wrapper
