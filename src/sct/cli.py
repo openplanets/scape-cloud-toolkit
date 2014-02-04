@@ -204,7 +204,11 @@ def main ():
 
 
     ########### Cluster
-    #cluster_parser.a
+    cluster_parser.add_argument( "--disable-ssl-check", "-S", action="store_true", default=False )
+    cluster_subparsers = cluster_parser.add_subparsers( title="Subcommands", description="Valid Cluster Commands" )
+    create_cluster_parser = cluster_subparsers.add_parser( "create" )
+    create_cluster_parser.add_argument( "--name", type=str, required=True, help="The name of the new cluster" )
+    create_cluster_parser.set_defaults( func=cc.cluster.create( cfg ) )
 
 
     ###### Handle

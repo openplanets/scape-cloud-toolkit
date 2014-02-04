@@ -30,6 +30,24 @@ from libcloud.compute.providers import get_driver
 
 import libcloud.security
 
+class ClusterController(object):
+    def __init__(self, config, cloud_controller):
+        self.configObj = config
+        self.config = None
+        self._initialized = False
+        self.cloud_controller = cloud_controller
+        if config.loaded:
+            self.init()
+
+    def init(self): # Used for lazzy init
+        if not self._initialized:
+            if 'clusters' not in self.configObj.config:
+                self.configObj.config["clusters"] = {}
+            self.config = self.configObj.config.get("clusters")
+
+    def create(self, name):
+        pass
+
 
 class CloudController( object ):
     log = logging.getLogger( "CloudController" )
@@ -37,8 +55,10 @@ class CloudController( object ):
     def __init__ (self, config):
         self.configObj = config
         self._initialized = False
+        self.cluster = ClusterController(config, self)
         if config.loaded:
             self.init( )
+            self.cluster.init()
 
     def init (self):
         if not self._initialized:
