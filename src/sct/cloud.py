@@ -22,6 +22,8 @@ limitations under the License.
 import logging
 import urlparse
 import time
+import os
+import codecs
 
 from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
@@ -97,10 +99,20 @@ class CloudController( object ):
         node_size = node_sizes[0]
         node_image = node_images[0]
 
+        requested_userdata = None
+        if userdata is not None:
+            requested_userdata = userdata
+        if userdata_file is not None:
+            if not os.path.exists( userdata_file ):
+                log.error( "Missing required user-data file: %s", userdata_file )
+                return False
+            with codecs.open( userdata_file, encoding="utf8" ) as userdata_fd:
+                requested_userdata = userdata_fd.read( )
         log.info( "Creating node %s (image=%s, size=%s)", requested_node_name, requested_node_image,
                   requested_node_size )
         result = self.conn.create_node( name=requested_node_name, image=node_image, size=node_size,
-                                        ex_addressingtype="private", ex_security_groups=[requested_security_group, ] )
+                                        ex_addressingtype="private", ex_security_groups=[requested_security_group, ],
+                                        ex_userdata=requested_userdata )
 
         start_time = time.time( )
         log.debug( "Waiting for the setup of the private network. Maximum duration = %f seconds",
