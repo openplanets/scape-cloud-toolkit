@@ -41,6 +41,11 @@ class BaseController(object):
         warnings.filterwarnings("ignore", module="libcloud.httplib_ssl")
         libcloud.security.VERIFY_SSL_CERT = False
 
+    def get_config_registry(self):
+        if 'config' not in self.global_config:
+            self.global_config['config'] = {}
+        return self.global_config.get('config')
+
 
 class ClusterController(BaseController):
     def __init__(self, config, cloud_controller):
@@ -60,11 +65,6 @@ class ClusterController(BaseController):
             self.config = self.configObj.config.get("clusters")
             self.global_config = self.configObj.config
             self._initialized = True
-
-    def get_config_registry(self):
-        if 'config' not in self.global_config:
-            self.global_config['config'] = {}
-        return self.global_config.get('config')
 
     def create(self, name):
         log = logging.getLogger("cluster.create")
