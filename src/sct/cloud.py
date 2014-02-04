@@ -141,7 +141,7 @@ class CloudController( object ):
             break
 
         if not node:
-            log.error("Failed to create node %s", requested_node_name)
+            log.error( "Failed to create node %s", requested_node_name )
             return False
 
         response = {'id': node.id, 'instance_id': node.extra['instance_id']}
@@ -373,4 +373,3 @@ class CloudController( object ):
         }
 
         return True
-
