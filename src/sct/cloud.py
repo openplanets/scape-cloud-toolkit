@@ -105,6 +105,7 @@ class CloudController( object ):
         start_time = time.time( )
         log.debug( "Waiting for the setup of the private network. Maximum duration = %f seconds",
                    network_setup_timeout )
+        node = None
         while True:
             duration = time.time( ) - start_time
             if duration > network_setup_timeout: # Wait for network setup
@@ -126,6 +127,10 @@ class CloudController( object ):
                     continue
             log.debug( "Private network was setup after %d seconds", duration )
             break
+
+        if not node:
+            log.error("Failed to create node %s", requested_node_name)
+            return False
 
         response = {'id': node.id, 'instance_id': node.extra['instance_id']}
         if requested_autoallocate_address:
@@ -286,12 +291,13 @@ class CloudController( object ):
         available_addreses = self.list_available_addresses( )
         if available_addreses:
             address_id = available_addreses.keys( ).pop( )
-            address = available_addreses[address_id]
             log.debug( "Found already existing address: %s", available_addreses[address_id].ip )
+            address = available_addreses[address_id]
+            return address
         else:
             log.debug( "No addresses available. Trying to obtain a new one" )
             address = self.allocate_address( )
-        return address
+            return address
 
 
     def get_libcloud_nodes (self, node_id):
