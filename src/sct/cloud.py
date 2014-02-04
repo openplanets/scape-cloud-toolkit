@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Copyright 2014 Universitatea de Vest din Timișoara
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,7 @@ limitations under the License.
 @author: Marian Neagul <marian@info.uvt.ro>
 @contact: marian@info.uvt.ro
 @copyright: 2014 Universitatea de Vest din Timișoara
-'''
+"""
 
 import logging
 import urlparse
@@ -258,7 +258,7 @@ class CloudController( object ):
         return addresses
 
     def list_available_addresses (self, **kwargs):
-        log = logging.getLogger( "list_available_addresses" )
+        #log = logging.getLogger( "list_available_addresses" )
         available_addresses = {}
         addresses = self.list_addresses( )
         for addr in addresses:
@@ -314,7 +314,7 @@ class CloudController( object ):
         if requested_address is None:
             requested_address = self.get_address( )
 
-        response = self.conn.ex_associate_address_with_node( node, requested_address )
+        self.conn.ex_associate_address_with_node( node, requested_address )
         return requested_address.ip
 
     def _get_keypair_config_container (self):
