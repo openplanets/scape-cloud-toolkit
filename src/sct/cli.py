@@ -51,6 +51,8 @@ class ControllerWrapper( object ):
                 for arg in dir( args ):
                     if arg.startswith( "_" ) or callable( getattr( args, arg ) ):
                         continue
+                    if arg in ["config_file", "verbose", "logging_config", "disable_ssl_check"]:
+                        continue
                     passed_args[arg] = getattr( args, arg )
 
                 cfg.load_config( args.config_file )
