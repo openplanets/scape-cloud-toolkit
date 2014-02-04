@@ -31,10 +31,23 @@ from libcloud.compute.providers import get_driver
 import libcloud.security
 
 
-class ClusterController(object):
+class BaseController(object):
+
+    def disable_ssl_check(self):
+        # ToDo: Find a way to workaround in a sane way the warning
+        # and not by disabling it
+        import warnings
+
+        warnings.filterwarnings("ignore", module="libcloud.httplib_ssl")
+        libcloud.security.VERIFY_SSL_CERT = False
+
+
+class ClusterController(BaseController):
     def __init__(self, config, cloud_controller):
+        super(BaseController, self).__init__()
         self.configObj = config
         self.config = None
+        self.global_config = None
         self._initialized = False
         self.cloud_controller = cloud_controller
         if config.loaded:
@@ -45,19 +58,44 @@ class ClusterController(object):
             if 'clusters' not in self.configObj.config:
                 self.configObj.config["clusters"] = {}
             self.config = self.configObj.config.get("clusters")
+            self.global_config = self.configObj.config
             self._initialized = True
 
+    def get_config_registry(self):
+        if 'config' not in self.global_config:
+            self.global_config['config'] = {}
+        return self.global_config.get('config')
+
     def create(self, name):
-        pass
+        log = logging.getLogger("cluster.create")
+        log.debug('Trying to create cluster named "%s"', name)
+        if name in self.config:
+            log.error("Cluster %s is already defined", name)
+            return False
+        self.config[name] = {}
+        cluster_config = self.config[name]
+
+        node = self.cloud_controller.create_node()
+
+    def delete(self, name):
+        # ToDo: Complete the implementation
+        log = logging.getLogger("cluster.delete")
+        if name in self.config:
+            del self.config[name]
+            return True
+        log.warn("No cluster with name '%s' to delete", name)
+        return  False
 
 
-class CloudController(object):
+class CloudController(BaseController):
     log = logging.getLogger("CloudController")
 
     def __init__(self, config):
+        super(BaseController, self).__init__()
         self.configObj = config
         self._initialized = False
         self.cluster = ClusterController(config, self)
+        self.conn = None
         if config.loaded:
             self.init()
             self.cluster.init()
@@ -76,14 +114,6 @@ class CloudController(object):
                                     port=url.port)
             self._initialized = True
             self.cluster.init()
-
-    def disable_ssl_check(self):
-        # ToDo: Find a way to workaround in a sane way the warning
-        # and not by disabling it
-        import warnings
-
-        warnings.filterwarnings("ignore", module="libcloud.httplib_ssl")
-        libcloud.security.VERIFY_SSL_CERT = False
 
     def create_node(self, name=None, size=None, image=None, userdata=None, userdata_file=None,
                     network_setup_timeout=None, auto_allocate_address=False, security_group=None):
