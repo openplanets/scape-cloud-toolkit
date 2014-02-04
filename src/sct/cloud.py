@@ -45,6 +45,7 @@ class ClusterController(object):
             if 'clusters' not in self.configObj.config:
                 self.configObj.config["clusters"] = {}
             self.config = self.configObj.config.get("clusters")
+            self._initialized = True
 
     def create(self, name):
         pass
