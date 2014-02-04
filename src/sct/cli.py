@@ -190,8 +190,6 @@ def main ():
     euca_list_keypairs.add_argument( "--name", type=str, required=False, default=None, help="The name of the keypair" )
     euca_list_keypairs.set_defaults( func=cc.list_keypairs( cfg ) )
 
-    euca_test_parser = euca_subparsers.add_parser( "test" )
-
 
     ########### Cluster
     #cluster_parser.a
