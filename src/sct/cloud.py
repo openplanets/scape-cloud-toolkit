@@ -60,13 +60,14 @@ class CloudController( object ):
         warnings.filterwarnings( "ignore", module="libcloud.httplib_ssl" )
         libcloud.security.VERIFY_SSL_CERT = False
 
-    def create_node (self, **args):
+    def create_node (self, name=None, size=None, image=None, userdata=None, userdata_file=None,
+                     network_setup_timeout=None, auto_allocate_address=False, security_group=None):
         log = logging.getLogger( "create_node" )
-        requested_node_size = args["size"]
-        requested_node_image = args["image"]
-        requested_node_name = args["name"]
-        requested_autoallocate_address = args["auto_allocate_address"]
-        requested_security_group = args["security_group"]
+        requested_node_size = size
+        requested_node_image = image
+        requested_node_name = name
+        requested_autoallocate_address = auto_allocate_address
+        requested_security_group = security_group
 
         log.debug( "Looking up security groups" )
         sec_groups = self.list_security_groups( )
@@ -103,10 +104,10 @@ class CloudController( object ):
 
         start_time = time.time( )
         log.debug( "Waiting for the setup of the private network. Maximum duration = %f seconds",
-                   args["network_setup_timeout"] )
+                   network_setup_timeout )
         while True:
             duration = time.time( ) - start_time
-            if duration > args["network_setup_timeout"]: # Wait for network setup
+            if duration > network_setup_timeout: # Wait for network setup
                 # ToDo: At this stage the node will remain in "limbo"
                 log.critical( "The Cloud failed to setup the addresses in expected time" )
                 return False
