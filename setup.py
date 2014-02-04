@@ -23,9 +23,9 @@ import os
 from setuptools import setup
 
 
-def read (fname):
-    if os.path.exists( fname ):
-        return open( os.path.join( os.path.dirname( __file__ ), fname ) ).read( )
+def read(fname):
+    if os.path.exists(fname):
+        return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
 srcdir = 'src'
@@ -41,7 +41,7 @@ setup(
     package_dir={'': srcdir},
     package_data={'': ['data/*.yaml']},
     packages=["sct", ],
-    long_description=read( 'README.rst' ),
+    long_description=read('README.rst'),
     classifiers=[
         "Intended Audience :: Developers",
         "Development Status :: 3 - Alpha",

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 Copyright 2014 Universitatea de Vest din Timișoara
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,7 @@ limitations under the License.
 @author: Marian Neagul <marian@info.uvt.ro>
 @contact: marian@info.uvt.ro
 @copyright: 2014 Universitatea de Vest din Timișoara
-'''
+"""
 
 import os
 import sys
@@ -27,7 +27,7 @@ from os.path import expanduser, join
 import yaml
 
 
-CONFIG_FILE = join( expanduser( "~" ), ".sct_config" )
+CONFIG_FILE = join(expanduser("~"), ".sct_config")
 
 EUCA_VAR_MAPS = {
     'ec2_url': 'EC2_URL',
@@ -53,121 +53,121 @@ EUCA_BLOB_VAR_MAPS = {
 }
 
 
-def argparse_euca_helper (parse):
+def argparse_euca_helper(parse):
     import argparse
 
     for key in EUCA_VAR_MAPS:
-        parse.add_argument( "--%s" % key, type=str, default=None )
+        parse.add_argument("--%s" % key, type=str, default=None)
     for key in EUCA_BLOB_VAR_MAPS:
-        parse.add_argument( "--%s" % key, type=argparse.FileType( "r" ) )
+        parse.add_argument("--%s" % key, type=argparse.FileType("r"))
 
 
-class ConfigFile( object ):
-    def __init__ (self):
+class ConfigFile(object):
+    def __init__(self):
         self.config = {}
         self.loaded = False
 
-    def load_config (self, config_file):
+    def load_config(self, config_file):
 
         if self.loaded:
             return
-        if not os.path.exists( config_file ):
+        if not os.path.exists(config_file):
             self.config = {}
             return # ToDo: We should not check the file.
 
-        with open( config_file, "r+b" ) as config_fd:
-            config_fd.seek( 0 )
-            config = yaml.load( config_fd )
+        with open(config_file, "r+b") as config_fd:
+            config_fd.seek(0)
+            config = yaml.load(config_fd)
             if config is None:
                 config = {}
             self.config = config
             self.loaded = True
 
         expected_cfg_dir_location = "%s.d" % config_file
-        cfg_dir = config.get( "config_directory", expected_cfg_dir_location )
+        cfg_dir = config.get("config_directory", expected_cfg_dir_location)
         if expected_cfg_dir_location != cfg_dir: # Validate location
             cfg_dir = expected_cfg_dir_location
             config["config_directory"] = expected_cfg_dir_location
-        if not os.path.exists( cfg_dir ):
-            os.makedirs( cfg_dir )
+        if not os.path.exists(cfg_dir):
+            os.makedirs(cfg_dir)
 
-        euca_config = config.get( "euca", {} )
+        euca_config = config.get("euca", {})
         if "eucalyptus_cert" in euca_config: # We have an eucalyptus key
             euca_cert = euca_config["eucalyptus_cert"]
-            euca_cert_path = os.path.abspath( os.path.join( cfg_dir, "euca_cert.txt" ) )
-            with open( euca_cert_path, "w" ) as f:
-                f.write( euca_cert )
+            euca_cert_path = os.path.abspath(os.path.join(cfg_dir, "euca_cert.txt"))
+            with open(euca_cert_path, "w") as f:
+                f.write(euca_cert)
             euca_config["eucalyptus_cert_file_path"] = euca_cert_path
 
 
-    def store_config (self, config_file):
-        with open( config_file, "w" ) as config_fd:
-            yaml.dump( self.config, config_fd, default_flow_style=False, default_style='|' )
+    def store_config(self, config_file):
+        with open(config_file, "w") as config_fd:
+            yaml.dump(self.config, config_fd, default_flow_style=False, default_style='|')
 
 
-    def _autodetect_euca_settings (self):
+    def _autodetect_euca_settings(self):
         if 'euca' not in self.config:
             self.config['euca'] = {}
         config = self.config['euca']
-        for prop, env in EUCA_VAR_MAPS.items( ):
-            value = os.environ.get( env, None )
+        for prop, env in EUCA_VAR_MAPS.items():
+            value = os.environ.get(env, None)
             config[prop] = value
 
-        for prop, env in EUCA_BLOB_VAR_MAPS.items( ):
-            value = os.environ.get( env, None )
-            if not os.path.exists( value ):
+        for prop, env in EUCA_BLOB_VAR_MAPS.items():
+            value = os.environ.get(env, None)
+            if not os.path.exists(value):
                 continue
-            with open( value, "rb" ) as f:
-                value = f.read( )
+            with open(value, "rb") as f:
+                value = f.read()
             config[prop] = value
 
 
-    def handle_config_euca (self, args):
+    def handle_config_euca(self, args):
         if args.autodetect:
-            self._autodetect_euca_settings( )
+            self._autodetect_euca_settings()
         if 'euca' not in self.config:
             self.config['euca'] = {}
         config = self.config['euca']
         for key in EUCA_VAR_MAPS:
-            value = getattr( args, key, None )
+            value = getattr(args, key, None)
             if value is None: continue
             config[key] = value
         for key in EUCA_BLOB_VAR_MAPS:
-            value = getattr( args, key, None )
+            value = getattr(args, key, None)
             if value is None: continue
-            with open( value, "rb" ) as f:
-                value = f.read( )
+            with open(value, "rb") as f:
+                value = f.read()
             config[key] = value
 
-    def handle_config_info (self, args):
-        yaml.dump( self.config, sys.stdout, default_flow_style=False, default_style='|' )
+    def handle_config_info(self, args):
+        yaml.dump(self.config, sys.stdout, default_flow_style=False, default_style='|')
 
-    def handle_config_registry (self, args):
-        log = logging.getLogger( "handle_config_registry" )
+    def handle_config_registry(self, args):
+        log = logging.getLogger("handle_config_registry")
         config_registry = {}
         if 'config' in self.config:
             config_registry = self.config['config']
         else:
-            log.debug( "Creating missing config registry" )
+            log.debug("Creating missing config registry")
             self.config['config'] = config_registry
         for cfg_entry in args.configs:
-            key, value = cfg_entry.split( "=" )
+            key, value = cfg_entry.split("=")
             if key in config_registry:
                 old_value = config_registry[key]
-                log.info( "Updating key %s (%s) with %s", key, old_value, value )
+                log.info("Updating key %s (%s) with %s", key, old_value, value)
             config_registry[key] = value
 
 
-    def get_config_handler (self, section):
+    def get_config_handler(self, section):
         hndlr_name = "handle_config_%s" % section
-        hndlr = getattr( self, hndlr_name, None )
+        hndlr = getattr(self, hndlr_name, None)
 
         if hndlr is None:
-            raise NotImplementedError( "Undefined config handler for section: %s", section )
+            raise NotImplementedError("Undefined config handler for section: %s", section)
 
-        def _handler_wrapper (args):
-            self.load_config( args.config_file )
-            hndlr( args )
-            self.store_config( args.config_file )
+        def _handler_wrapper(args):
+            self.load_config(args.config_file)
+            hndlr(args)
+            self.store_config(args.config_file)
 
         return _handler_wrapper
