@@ -116,13 +116,22 @@ class CloudController(BaseController):
             self.cluster.init()
 
     def create_node(self, name=None, size=None, image=None, userdata=None, userdata_file=None,
-                    network_setup_timeout=None, auto_allocate_address=False, security_group=None):
+                    network_setup_timeout=200, auto_allocate_address=False, security_group=None):
         log = logging.getLogger("create_node")
         requested_node_size = size
         requested_node_image = image
         requested_node_name = name
         requested_autoallocate_address = auto_allocate_address
         requested_security_group = security_group
+
+        if size is None:
+            raise ValueError("Argument `size` needs to be provided")
+        if image is None:
+            raise ValueError("Argument `image` needs to be provided")
+        if name is None:
+            raise ValueError("Argument `name` needs to be provided")
+        if security_group is None:
+            raise ValueError("Argument `security_group` needs to be provided")
 
         log.debug("Looking up security groups")
         sec_groups = self.list_security_groups()
@@ -161,8 +170,13 @@ class CloudController(BaseController):
                 return False
             with codecs.open(userdata_file, encoding="utf8") as userdata_fd:
                 requested_userdata = userdata_fd.read()
+
+        if requested_userdata is None:
+            log.warn("No userdata provided!")
+
         log.info("Creating node %s (image=%s, size=%s)", requested_node_name, requested_node_image,
                  requested_node_size)
+
         self.conn.create_node(name=requested_node_name, image=node_image, size=node_size,
                               ex_addressingtype="private", ex_security_groups=[requested_security_group, ],
                               ex_userdata=requested_userdata)
