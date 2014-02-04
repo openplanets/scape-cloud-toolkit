@@ -133,9 +133,10 @@ def main ():
     euca_create_node_parser.add_argument( "--security-group", type=str, required=True, help="Name for the new node" )
     euca_create_node_parser.add_argument( "--auto-allocate-address", action="store_true", required=False, default=False,
                                           help="Auto allocate address" )
-    euca_create_node_parser.add_argument( "--userdata", type=str, default=None,
+    euca_create_node_parser_exclusive = euca_create_node_parser.add_mutually_exclusive_group()
+    euca_create_node_parser_exclusive.add_argument( "--userdata", type=str, default=None,
                                           help="Userdata to provide to the machine" )
-    euca_create_node_parser.add_argument( "--userdata-file", type=str, default=None,
+    euca_create_node_parser_exclusive.add_argument( "--userdata-file", type=str, default=None,
                                           help="Path to the file hosting userdata" )
     euca_create_node_parser.set_defaults( func=cc.create_node( cfg ) )
 
