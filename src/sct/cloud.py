@@ -294,9 +294,9 @@ class CloudController( object ):
         return address
 
 
-    def get_libcloud_nodes (self, id):
+    def get_libcloud_nodes (self, node_id):
         nodes = self.conn.list_nodes( )
-        selected_nodes = [node for node in nodes if node.id == id or node.name == id]
+        selected_nodes = [node for node in nodes if node.id == node_id or node.extra["instance_id"] == node_id]
         return selected_nodes
 
     def associate_address (self, **kwargs):
