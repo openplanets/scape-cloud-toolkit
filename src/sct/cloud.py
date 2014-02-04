@@ -32,7 +32,6 @@ import libcloud.security
 
 
 class BaseController(object):
-
     def disable_ssl_check(self):
         # ToDo: Find a way to workaround in a sane way the warning
         # and not by disabling it
@@ -66,8 +65,9 @@ class ClusterController(BaseController):
             self.global_config = self.configObj.config
             self._initialized = True
 
-    def create(self, name):
+    def create(self, name, image, size, security_group):
         log = logging.getLogger("cluster.create")
+        config_registry = self.get_config_registry()
         log.debug('Trying to create cluster named "%s"', name)
         if name in self.config:
             log.error("Cluster %s is already defined", name)
@@ -75,7 +75,34 @@ class ClusterController(BaseController):
         self.config[name] = {}
         cluster_config = self.config[name]
 
-        node = self.cloud_controller.create_node()
+        requested_size = size or config_registry.get('cluster.default_size', None)
+        requested_image = image or config_registry.get('cluster.default_image', None)
+        requested_security_group = security_group or config_registry.get('cluster.default_security_group', None)
+
+        if requested_size is None:
+            log.error("Size not specified and not defined in config (cluster.default_size)")
+            return False
+
+        if requested_image is None:
+            log.error("Image not specified and not defined in config (cluster.default_image)")
+            return False
+
+        if requested_security_group is None:
+            log.error("Security group not specified and not defined in config (cluster.default_security_group)")
+            return False
+
+        management_node_name = "%s_Manager" % name
+
+        node = self.cloud_controller.create_node(name=management_node_name, size=requested_size, image=requested_image,
+                                                 security_group=requested_security_group, auto_allocate_address=True)
+
+        if not node:
+            log.error("Error creating management node.")
+            return False
+        cluster_config["management_node"] = {'name': management_node_name,
+                                             'instance_id': node["instance_id"]
+        }
+        print node
 
     def delete(self, name):
         # ToDo: Complete the implementation
@@ -84,7 +111,7 @@ class ClusterController(BaseController):
             del self.config[name]
             return True
         log.warn("No cluster with name '%s' to delete", name)
-        return  False
+        return False
 
 
 class CloudController(BaseController):
