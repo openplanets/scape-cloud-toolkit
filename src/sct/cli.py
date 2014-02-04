@@ -228,6 +228,10 @@ def main():
     cluster_subparsers = cluster_parser.add_subparsers(title="Subcommands", description="Valid Cluster Commands")
     create_cluster_parser = cluster_subparsers.add_parser("create")
     create_cluster_parser.add_argument("--name", type=str, required=True, help="The name of the new cluster")
+    create_cluster_parser.add_argument("--size", type=str, required=False, help="Size used for the management image")
+    create_cluster_parser.add_argument("--image", type=str, required=False, help="Image used for the management image")
+    create_cluster_parser.add_argument("--security-group", type=str, required=False,
+                                       help="Security group used for the management image")
     create_cluster_parser.set_defaults(func=cc.cluster.create(cfg))
     delete_cluster_parser = cluster_subparsers.add_parser("delete")
     delete_cluster_parser.add_argument("--name", type=str, required=True, help="The name of the cluster to be deleted")
