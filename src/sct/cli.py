@@ -36,6 +36,7 @@ class ControllerWrapper(object):
     def __init__(self, klass, klassInst=None):
         self.klass = klass
         self.klassInst = klassInst
+        self.config = None
 
     def __getattr__(self, item):
         class __ConfigWrapper__(object):
@@ -47,8 +48,32 @@ class ControllerWrapper(object):
                 if not hasattr(self.outer_instance.klassInst, self.outer_item):
                     raise NameError("Name %s is not defined in %s" % (item, self.outer_item))
                 outer_obj = getattr(self.outer_instance.klassInst, self.outer_item)
-                inner_cc = ControllerWrapper(outer_obj.__class__, outer_obj)
-                return getattr(inner_cc, item)
+
+                def __cfg_wrapper(cfg):
+                    inner_cc = ControllerWrapper(outer_obj.__class__, outer_obj)
+
+                    def __args_wrapper(args):
+                        cfg.load_config(args.config_file)
+                        self.outer_instance.klassInst.init()
+                        passed_args = self._filter_args(args)
+                        if args.disable_ssl_check:
+                            outer_obj.disable_ssl_check()
+                        print getattr(outer_obj, item)(**passed_args)
+                        cfg.store_config(args.config_file)
+
+                    return __args_wrapper
+
+                return __cfg_wrapper
+
+            def _filter_args(self, args):
+                passed_args = {}
+                for arg in dir(args):
+                    if arg.startswith("_") or callable(getattr(args, arg)):
+                        continue
+                    if arg in ["config_file", "verbose", "logging_config", "disable_ssl_check"]:
+                        continue
+                    passed_args[arg] = getattr(args, arg)
+                return passed_args
 
             def __call__(self, cfg):
                 outer_instance = self.outer_instance
@@ -61,13 +86,7 @@ class ControllerWrapper(object):
                 inner_attrib = getattr(outer_instance.klassInst, item)
 
                 def __func_wrapper(args):
-                    passed_args = {}
-                    for arg in dir(args):
-                        if arg.startswith("_") or callable(getattr(args, arg)):
-                            continue
-                        if arg in ["config_file", "verbose", "logging_config", "disable_ssl_check"]:
-                            continue
-                        passed_args[arg] = getattr(args, arg)
+                    passed_args = self._filter_args(args)
 
                     cfg.load_config(args.config_file)
                     outer_instance.klassInst.init()
@@ -210,6 +229,10 @@ def main():
     create_cluster_parser = cluster_subparsers.add_parser("create")
     create_cluster_parser.add_argument("--name", type=str, required=True, help="The name of the new cluster")
     create_cluster_parser.set_defaults(func=cc.cluster.create(cfg))
+    delete_cluster_parser = cluster_subparsers.add_parser("delete")
+    delete_cluster_parser.add_argument("--name", type=str, required=True, help="The name of the cluster to be deleted")
+    delete_cluster_parser.set_defaults(func=cc.cluster.delete(cfg))
+
 
     ###### Handle
     args = parser.parse_args()
