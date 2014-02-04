@@ -33,40 +33,53 @@ from sct.cloud import CloudController
 
 
 class ControllerWrapper( object ):
-    def __init__ (self, klass):
+    def __init__ (self, klass, klassInst=None):
         self.klass = klass
-        self.klassInst = None
+        self.klassInst = klassInst
 
     def __getattr__ (self, item):
-        def _config_wrapper (cfg):
-            if self.klassInst is None:
-                self.klassInst = self.klass( cfg )
+        class __ConfigWrapper__( object ):
+            def __init__(self, outer_instance, outer_item):
+                self.outer_instance = outer_instance
+                self.outer_item = outer_item
 
-            if not hasattr( self.klassInst, item ):
-                raise NameError( "Name %s is not defined" % item )
-            inner_func = getattr( self.klassInst, item )
+            def __getattr__ (self, item):
+                if not hasattr( self.outer_instance.klassInst, self.outer_item ):
+                    raise NameError( "Name %s is not defined in %s" % (item, self.outer_item) )
+                outer_obj = getattr(self.outer_instance.klassInst, self.outer_item)
+                inner_cc = ControllerWrapper(outer_obj.__class__, outer_obj)
+                return getattr(inner_cc, item)
 
-            def __wrapper (args):
-                passed_args = {}
-                for arg in dir( args ):
-                    if arg.startswith( "_" ) or callable( getattr( args, arg ) ):
-                        continue
-                    if arg in ["config_file", "verbose", "logging_config", "disable_ssl_check"]:
-                        continue
-                    passed_args[arg] = getattr( args, arg )
+            def __call__ (self, cfg):
+                outer_instance = self.outer_instance
+                if outer_instance.klassInst is None:
+                    outer_instance.klassInst = outer_instance.klass( cfg )
 
-                cfg.load_config( args.config_file )
-                self.klassInst.init( )
-                if args.disable_ssl_check:
-                    self.klassInst.disable_ssl_check( )
-                result = inner_func( **passed_args )
-                cfg.store_config( args.config_file )
-                yaml.dump( result, sys.stdout, default_flow_style=False )
+                if not hasattr( outer_instance.klassInst, item ):
+                    raise NameError( "Name %s is not defined" % item )
 
-            return __wrapper
+                inner_attrib = getattr( outer_instance.klassInst, item )
 
-        return _config_wrapper
+                def __func_wrapper (args):
+                    passed_args = {}
+                    for arg in dir( args ):
+                        if arg.startswith( "_" ) or callable( getattr( args, arg ) ):
+                            continue
+                        if arg in ["config_file", "verbose", "logging_config", "disable_ssl_check"]:
+                            continue
+                        passed_args[arg] = getattr( args, arg )
 
+                    cfg.load_config( args.config_file )
+                    outer_instance.klassInst.init( )
+                    if args.disable_ssl_check:
+                        outer_instance.klassInst.disable_ssl_check( )
+                    result = inner_attrib( **passed_args )
+                    cfg.store_config( args.config_file )
+                    yaml.dump( result, sys.stdout, default_flow_style=False )
+
+                return __func_wrapper
+
+        return __ConfigWrapper__( self, item)
 
 cc = ControllerWrapper( CloudController )
 #print cc.list_nodes
