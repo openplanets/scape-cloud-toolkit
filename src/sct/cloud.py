@@ -74,6 +74,7 @@ class CloudController(object):
                                     host=url.hostname,
                                     port=url.port)
             self._initialized = True
+            self.cluster.init()
 
     def disable_ssl_check(self):
         # ToDo: Find a way to workaround in a sane way the warning
