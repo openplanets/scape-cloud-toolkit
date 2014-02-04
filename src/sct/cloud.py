@@ -21,6 +21,7 @@ limitations under the License.
 
 import logging
 import urlparse
+import time
 
 from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
@@ -64,6 +65,14 @@ class CloudController( object ):
         requested_node_size = args["size"]
         requested_node_image = args["image"]
         requested_node_name = args["name"]
+        requested_autoallocate_address = args["auto_allocate_address"]
+        requested_security_group = args["security_group"]
+
+        log.debug( "Looking up security groups" )
+        sec_groups = self.list_security_groups( )
+        if requested_security_group not in sec_groups:
+            log.error( "Requested security group is not available" )
+            return False
 
         log.debug( "Looking up sizes" )
         node_sizes = [size for size in self.conn.list_sizes( ) if size.id == requested_node_size]
@@ -89,8 +98,41 @@ class CloudController( object ):
 
         log.info( "Creating node %s (image=%s, size=%s)", requested_node_name, requested_node_image,
                   requested_node_size )
-        self.conn.create_node( name=requested_node_name, image=node_image, size=node_size, ex_addressingtype="private" )
-        return True
+        result = self.conn.create_node( name=requested_node_name, image=node_image, size=node_size,
+                                        ex_addressingtype="private", ex_security_groups=[requested_security_group, ] )
+
+        start_time = time.time( )
+        log.debug( "Waiting for the setup of the private network. Maximum duration = %f seconds",
+                   args["network_setup_timeout"] )
+        while True:
+            duration = time.time( ) - start_time
+            if duration > args["network_setup_timeout"]: # Wait for network setup
+                # ToDo: At this stage the node will remain in "limbo"
+                log.critical( "The Cloud failed to setup the addresses in expected time" )
+                return False
+            nodes = [node for node in self.conn.list_nodes( ) if node.name == requested_node_name]
+            if not nodes:
+                log.error( "Failed to create node %s", requested_node_name )
+                return False
+            node = nodes[0]
+            priv_ips = node.private_ips
+            if not priv_ips:
+                time.sleep( 1 )
+                continue
+            if priv_ips:
+                if priv_ips[0] == "0.0.0.0": ### hack
+                    time.sleep( 1 )
+                    continue
+            log.debug( "Private network was setup after %d seconds", duration )
+            break
+
+        response = {'id': node.id, 'instance_id': node.extra['instance_id']}
+        if requested_autoallocate_address:
+            addr = self.associate_address( instance_id=node.extra['instance_id'] )
+            response["ip"] = addr
+
+        return response
+
 
     def list_nodes (self, **kwargs):
         conn = self.conn
@@ -211,10 +253,7 @@ class CloudController( object ):
         result = self.conn.ex_describe_all_addresses( kwargs.get( "associated", None ) )
         addresses = {}
         for addr in result:
-            addresses[addr.ip] = {
-                'domain': addr.domain,
-                'instance_id': addr.instance_id
-            }
+            addresses[addr.ip] = addr
         return addresses
 
     def list_available_addresses (self, **kwargs):
@@ -223,10 +262,96 @@ class CloudController( object ):
         addresses = self.list_addresses( )
         for addr in addresses:
             entry = addresses[addr]
-            if entry.get( "instance_id", None ) is None:
+            if entry.instance_id is None:
                 available_addresses[addr] = addresses[addr]
         return available_addresses
 
+
+    def allocate_address (self, **kwargs):
+        log = logging.getLogger( "allocate_address" )
+
+        response = self.conn.ex_allocate_address( )
+
+        if response:
+            log.debug( "Allocating new address %s", response.ip )
+            return response
+        else:
+            log.warn( "Failed to allocate new address." )
+            return False
+
+    def get_address (self, **kwargs):
+        log = logging.getLogger( "get_address" )
+        address = None
+        available_addreses = self.list_available_addresses( )
+        if available_addreses:
+            address_id = available_addreses.keys( ).pop( )
+            address = available_addreses[address_id]
+            log.debug( "Found already existing address: %s", available_addreses[address_id].ip )
+        else:
+            log.debug( "No addresses available. Trying to obtain a new one" )
+            address = self.allocate_address( )
+        return address
+
+
+    def get_libcloud_nodes (self, id):
+        nodes = self.conn.list_nodes( )
+        selected_nodes = [node for node in nodes if node.id == id or node.name == id]
+        return selected_nodes
+
     def associate_address (self, **kwargs):
-        pass
+        log = logging.getLogger( "associate_address" )
+        instance_id = kwargs["instance_id"]
+        requested_address = kwargs.get( "address", None )
+
+        nodes = self.get_libcloud_nodes( instance_id )
+        if nodes:
+            node = nodes.pop( )
+        else:
+            log.error( "Could not find node %s by instance-id or id", instance_id )
+            return False
+
+        if requested_address is None:
+            requested_address = self.get_address( )
+
+        response = self.conn.ex_associate_address_with_node( node, requested_address )
+        return requested_address.ip
+
+    def _get_keypair_config_container (self):
+        config = self.configObj.config
+        if 'keypairs' in config:
+            return config.get( 'keypairs' )
+        else:
+            config["keypairs"] = {}
+            return config.get( 'keypairs' )
+
+    def list_keypairs (self, **args):
+        name = args["name"]
+        all_keypairs = self.conn.list_key_pairs( )
+        keypairs = []
+        for keypair in all_keypairs:
+            if name is None:
+                keypairs.append( keypair )
+            elif keypair.name == name:
+                keypairs.append( keypair )
+            else:
+                continue
+        return keypairs
+
+
+    def create_keypair (self, **kwargs):
+        log = logging.getLogger( "create_keypair" )
+        name = kwargs.get( "name" )
+        config = self._get_keypair_config_container( )
+        keypairs = self.list_keypairs( name=name )
+        if keypairs:
+            log.critical( "Keypair %s already exists", name )
+            return False
+        keypair = self.conn.create_key_pair( name )
+
+        config[name] = {
+            'private_key': keypair.private_key,
+            'public_key': keypair.public_key
+        }
+
+        return True
 

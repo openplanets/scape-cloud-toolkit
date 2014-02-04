@@ -90,6 +90,7 @@ def main ():
     cloud_info_parser = subparsers.add_parser( 'cloud-info', help="Set Cloud Configuration Params" )
     cloud_info_parser.set_defaults( func=cfg.get_config_handler( "info" ) )
     euca_parser = subparsers.add_parser( 'euca' )
+    cluster_parser = subparsers.add_parser( "cluster" )
 
     ############## Cloud Config #################
     cloud_config_subparsers = cloud_config_parser.add_subparsers( title="Subcomands",
@@ -110,9 +111,9 @@ def main ():
 
     ############# Euca Commands ##################
     euca_parser.add_argument( "--disable-ssl-check", "-S", action="store_true", default=False )
-    euca_subparsers = euca_parser.add_subparsers( title="Subcommands" )
+    euca_subparsers = euca_parser.add_subparsers( title="Subcommands", description="Valid EUCA Commands" )
 
-    euca_list_nodes_parser = euca_subparsers.add_parser( "list-nodes" )
+    euca_list_nodes_parser = euca_subparsers.add_parser( "list-nodes", help="List registered nodes" )
     euca_list_nodes_parser.set_defaults( func=cc.list_nodes( cfg ) )
 
     euca_list_images_parser = euca_subparsers.add_parser( "list-images" )
@@ -125,6 +126,15 @@ def main ():
     euca_create_node_parser.add_argument( "--image", type=str, required=True, help="Image used for creating the node" )
     euca_create_node_parser.add_argument( "--size", type=str, required=True, help="Size used for the created image" )
     euca_create_node_parser.add_argument( "--name", type=str, required=True, help="Name for the new node" )
+    euca_create_node_parser.add_argument( "--network-setup-timeout", type=int, required=False, default=120,
+                                          help="Number of seconds to wait for the Cloud to setup the private network." )
+    euca_create_node_parser.add_argument( "--security-group", type=str, required=True, help="Name for the new node" )
+    euca_create_node_parser.add_argument( "--auto-allocate-address", action="store_true", required=False, default=False,
+                                          help="Auto allocate address" )
+    euca_create_node_parser.add_argument( "--userdata", type=str, default=None,
+                                          help="Userdata to provide to the machine" )
+    euca_create_node_parser.add_argument( "--userdata-file", type=str, default=None,
+                                          help="Path to the file hosting userdata" )
     euca_create_node_parser.set_defaults( func=cc.create_node( cfg ) )
 
     euca_create_security_group = euca_subparsers.add_parser( "create-security-group" )
@@ -159,7 +169,29 @@ def main ():
     euca_list_addresses = euca_subparsers.add_parser( "list-available-addresses" )
     euca_list_addresses.set_defaults( func=cc.list_available_addresses( cfg ) )
 
+    euca_allocate_address = euca_subparsers.add_parser( "allocate-address" )
+    euca_allocate_address.set_defaults( func=cc.allocate_address( cfg ) )
+
+    euca_associate_address = euca_subparsers.add_parser( "associate-address" )
+    euca_associate_address.add_argument( "--instance-id", type=str, required=True,
+                                         help="The node to associate the address to" )
+    euca_associate_address.add_argument( "--address", type=str, required=False,
+                                         help="The address that should be allocated." )
+    euca_associate_address.set_defaults( func=cc.associate_address( cfg ) )
+
+    euca_create_keypair = euca_subparsers.add_parser( "create-keypair" )
+    euca_create_keypair.add_argument( "--name", type=str, required=True, help="The name of the keypair" )
+    euca_create_keypair.set_defaults( func=cc.create_keypair( cfg ) )
+
+    euca_list_keypairs = euca_subparsers.add_parser( "list-keypairs" )
+    euca_list_keypairs.add_argument( "--name", type=str, required=False, default=None, help="The name of the keypair" )
+    euca_list_keypairs.set_defaults( func=cc.list_keypairs( cfg ) )
+
     euca_test_parser = euca_subparsers.add_parser( "test" )
+
+
+    ########### Cluster
+    #cluster_parser.a
 
 
     ###### Handle
