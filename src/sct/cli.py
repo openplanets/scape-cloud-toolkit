@@ -164,7 +164,8 @@ def main():
     euca_create_node_parser.add_argument("--network-setup-timeout", type=int, required=False, default=120,
                                          help="Number of seconds to wait for the Cloud to setup the private network.")
     euca_create_node_parser.add_argument("--security-group", type=str, required=True, help="Name for the new node")
-    euca_create_node_parser.add_argument("--keypair-name", type=str, required=False, help="The name of the keypair to use")
+    euca_create_node_parser.add_argument("--keypair-name", type=str, required=False,
+                                         help="The name of the keypair to use")
     euca_create_node_parser.add_argument("--auto-allocate-address", action="store_true", required=False, default=False,
                                          help="Auto allocate address")
     euca_create_node_parser_exclusive = euca_create_node_parser.add_mutually_exclusive_group()
@@ -225,8 +226,10 @@ def main():
     euca_list_keypairs.set_defaults(func=cc.list_keypairs(cfg))
 
     euca_console_subparsers = euca_subparsers.add_parser("console")
-    euca_console_subparsers.add_argument("--node-id", type=str, required=True, default=None, help="The instance id of the node")
-    euca_console_subparsers.add_argument("--keypair-name", type=str, required=True, default=None, help="The name of the keypair to use")
+    euca_console_subparsers.add_argument("--node-id", type=str, required=True, default=None,
+                                         help="The instance id of the node")
+    euca_console_subparsers.add_argument("--keypair-name", type=str, required=True, default=None,
+                                         help="The name of the keypair to use")
     euca_console_subparsers.set_defaults(func=cc.console(cfg))
 
     ########### Cluster
