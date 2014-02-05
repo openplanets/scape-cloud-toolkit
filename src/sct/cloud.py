@@ -53,7 +53,7 @@ class BaseController(object):
             return config.get('keypairs')
 
     def list_keypairs(self, **args):
-        name = args["name"]
+        name = args.get("name", None)
         all_keypairs = self.conn.list_key_pairs()
         keypairs = []
         for keypair in all_keypairs:
