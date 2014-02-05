@@ -152,8 +152,10 @@ class ClusterController(BaseController):
         if not node:
             log.error("Error creating management node.")
             return False
+
         cluster_config["management_node"] = {'name': management_node_name,
-                                             'instance_id': node["instance_id"]
+                                             'instance_id': node["instance_id"],
+                                             'ip': node["ip"]
         }
         print node
 
@@ -174,6 +176,7 @@ class CloudController(BaseController):
         BaseController.__init__(self,config)
         self.configObj = config
         self.cluster = ClusterController(config, self)
+        self.euca_config = None
         self.conn = None
         if config.loaded:
             self.init()
@@ -183,6 +186,8 @@ class CloudController(BaseController):
         if not self._initialized:
             BaseController.init(self)
             config = self.configObj.config['euca']
+            self.euca_config = config
+            self.config = self.configObj.config
             if 'eucalyptus_cert_file_path' in config:
                 libcloud.security.CA_CERTS_PATH.append(config["eucalyptus_cert_file_path"])
             self.driver = get_driver(Provider.EUCALYPTUS)
