@@ -32,6 +32,19 @@ import libcloud.security
 
 
 class BaseController(object):
+
+    def __init__(self, config):
+        self.configObj = config
+        self.config = None
+        self.global_config = None
+        self._initialized = False
+
+
+    def init(self):
+        if not self._initialized:
+            self.global_config = self.configObj.config
+
+
     def disable_ssl_check(self):
         # ToDo: Find a way to workaround in a sane way the warning
         # and not by disabling it
@@ -44,6 +57,8 @@ class BaseController(object):
         if 'config' not in self.global_config:
             self.global_config['config'] = {}
         return self.global_config.get('config')
+
+
     def _get_keypair_config_container(self):
         config = self.configObj.config
         if 'keypairs' in config:
@@ -87,12 +102,9 @@ class BaseController(object):
 
 class ClusterController(BaseController):
     def __init__(self, config, cloud_controller):
-        super(BaseController, self).__init__()
-        self.configObj = config
-        self.config = None
-        self.global_config = None
-        self._initialized = False
+        BaseController.__init__(self,config)
         self.cloud_controller = cloud_controller
+        self._initialized = False
         if config.loaded:
             self.init()
 
@@ -100,19 +112,21 @@ class ClusterController(BaseController):
         if not self._initialized:
             if 'clusters' not in self.configObj.config:
                 self.configObj.config["clusters"] = {}
-            self.config = self.configObj.config.get("clusters")
-            self.global_config = self.configObj.config
+            self.clusters_config = self.configObj.config.get("clusters")
+            BaseController.init(self)
+
             self._initialized = True
+
 
     def create(self, name, image, size, security_group):
         log = logging.getLogger("cluster.create")
         config_registry = self.get_config_registry()
         log.debug('Trying to create cluster named "%s"', name)
-        if name in self.config:
+        if name in self.clusters_config:
             log.error("Cluster %s is already defined", name)
             return False
-        self.config[name] = {}
-        cluster_config = self.config[name]
+        self.clusters_config[name] = {}
+        cluster_config = self.clusters_config[name]
 
         requested_size = size or config_registry.get('cluster.default_size', None)
         requested_image = image or config_registry.get('cluster.default_image', None)
@@ -146,8 +160,8 @@ class ClusterController(BaseController):
     def delete(self, name):
         # ToDo: Complete the implementation
         log = logging.getLogger("cluster.delete")
-        if name in self.config:
-            del self.config[name]
+        if name in self.clusters_config:
+            del self.clusters_config[name]
             return True
         log.warn("No cluster with name '%s' to delete", name)
         return False
@@ -157,9 +171,8 @@ class CloudController(BaseController):
     log = logging.getLogger("CloudController")
 
     def __init__(self, config):
-        super(BaseController, self).__init__()
+        BaseController.__init__(self,config)
         self.configObj = config
-        self._initialized = False
         self.cluster = ClusterController(config, self)
         self.conn = None
         if config.loaded:
@@ -168,6 +181,7 @@ class CloudController(BaseController):
 
     def init(self):
         if not self._initialized:
+            BaseController.init(self)
             config = self.configObj.config['euca']
             if 'eucalyptus_cert_file_path' in config:
                 libcloud.security.CA_CERTS_PATH.append(config["eucalyptus_cert_file_path"])
