@@ -35,7 +35,6 @@ from sct.cloudinit import CloudInit, CloudConfig, DefaultPuppetCloudConfig, Defa
 
 
 class BaseController(object):
-
     def __init__(self, config):
         self.configObj = config
         self.config = None
@@ -100,10 +99,9 @@ class BaseController(object):
         return True
 
 
-
 class ClusterController(BaseController):
     def __init__(self, config, cloud_controller):
-        BaseController.__init__(self,config)
+        BaseController.__init__(self, config)
         self.cloud_controller = cloud_controller
         self._initialized = False
         if config.loaded:
@@ -130,7 +128,7 @@ class ClusterController(BaseController):
         self.clusters_config[name] = {}
         cluster_config = self.clusters_config[name]
         cluster_config["nodes"] = {}
-        cluster_nodes_config=cluster_config["nodes"]
+        cluster_nodes_config = cluster_config["nodes"]
 
         requested_size = size or config_registry.get('cluster.default_size', None)
         requested_image = image or config_registry.get('cluster.default_image', None)
@@ -151,7 +149,6 @@ class ClusterController(BaseController):
         if 'main_keypair' not in cluster_config:
             cluster_config['main_keypair'] = "%s_MainKeypair" % name
         keypair_name = cluster_config['main_keypair']
-
 
         found_keypairs = self.cloud_controller.list_keypairs(name=keypair_name)
         if found_keypairs:
@@ -184,10 +181,9 @@ class ClusterController(BaseController):
             log.error("Error creating management node.")
             return False
 
-
         cluster_nodes_config["management_node"] = {'name': management_node_name,
-                                             'instance_id': node["instance_id"],
-                                             'ip': node["ip"]
+                                                   'instance_id': node["instance_id"],
+                                                   'ip': node["ip"]
         }
         print node
 
@@ -209,7 +205,6 @@ class ClusterController(BaseController):
         if node not in cluster_nodes_config:
             log.error("Node %s is not part of cluster %s", node, name)
             return False
-
 
         node_configuration = cluster_nodes_config[node]
         node_id = node_configuration["instance_id"]
@@ -233,7 +228,7 @@ class CloudController(BaseController):
     log = logging.getLogger("CloudController")
 
     def __init__(self, config):
-        BaseController.__init__(self,config)
+        BaseController.__init__(self, config)
         self.configObj = config
         self.cluster = ClusterController(config, self)
         self.euca_config = None
@@ -299,14 +294,13 @@ class CloudController(BaseController):
             log.debug("Looking up keypairs")
             matching_keypairs = [keypair for keypair in self.list_keypairs(name=keypair_name)]
             if matching_keypairs:
-                requested_keypair_name=matching_keypairs[0].name
+                requested_keypair_name = matching_keypairs[0].name
                 kwargs["ex_keyname"] = requested_keypair_name
             else:
                 log.error("Could not find requested keypair: %s", keypair_name)
                 return False
         else:
             log.error("No keypair setup for node")
-
 
         if matching_nodes:
             log.critical("Request node name (%s) is in use", requested_node_name)
@@ -576,20 +570,24 @@ class CloudController(BaseController):
         ssh_client = config_registry.get("global.ssh.client", "ssh")
         ssh_user = config_registry.get("global.ssh.user", "ubuntu")
 
-        nodes = [node for node in self.list_nodes() if node["instance-status"] == "running" and node["instance-id"] == node_id]
+        nodes = [node for node in self.list_nodes() if
+                 node["instance-status"] == "running" and node["instance-id"] == node_id]
         if not nodes:
             log.error("Could not find running node %s", node_id)
             return False
         public_ips = nodes[0].get("public-networking", {}).get("public-ips", [])
         ip_address = public_ips[0]
 
-        named_key_temp_file = tempfile.NamedTemporaryFile(delete=False,dir=config_directory, suffix="_%s" %keypair_name, prefix="ssh_tmp_")
-        named_known_hosts_temp_file = tempfile.NamedTemporaryFile(delete=False,dir=config_directory, suffix="_%s" %keypair_name, prefix="ssh_known_")
+        named_key_temp_file = tempfile.NamedTemporaryFile(delete=False, dir=config_directory,
+                                                          suffix="_%s" % keypair_name, prefix="ssh_tmp_")
+        named_known_hosts_temp_file = tempfile.NamedTemporaryFile(delete=False, dir=config_directory,
+                                                                  suffix="_%s" % keypair_name, prefix="ssh_known_")
 
         with open(named_key_temp_file.name, "w") as tmp_fd:
             tmp_fd.write(keypair_priv_key)
 
-        call_args = [ssh_client, "-i", named_key_temp_file.name, "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=%s" % named_known_hosts_temp_file.name, "%s@%s" % (ssh_user, ip_address)]
+        call_args = [ssh_client, "-i", named_key_temp_file.name, "-o", "StrictHostKeyChecking=no", "-o",
+                     "UserKnownHostsFile=%s" % named_known_hosts_temp_file.name, "%s@%s" % (ssh_user, ip_address)]
         log.debug("Calling: '%s'", " ".join(call_args))
         ret_code = subprocess.call(call_args)
         if ret_code != 0:
