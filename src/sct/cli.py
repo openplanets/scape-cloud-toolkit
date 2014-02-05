@@ -224,6 +224,11 @@ def main():
     euca_list_keypairs.add_argument("--name", type=str, required=False, default=None, help="The name of the keypair")
     euca_list_keypairs.set_defaults(func=cc.list_keypairs(cfg))
 
+    euca_console_subparsers = euca_subparsers.add_parser("console")
+    euca_console_subparsers.add_argument("--node-id", type=str, required=True, default=None, help="The instance id of the node")
+    euca_console_subparsers.add_argument("--keypair-name", type=str, required=True, default=None, help="The name of the keypair to use")
+    euca_console_subparsers.set_defaults(func=cc.console(cfg))
+
     ########### Cluster
     cluster_parser.add_argument("--disable-ssl-check", "-S", action="store_true", default=False)
     cluster_subparsers = cluster_parser.add_subparsers(title="Subcommands", description="Valid Cluster Commands")

@@ -24,6 +24,8 @@ import urlparse
 import time
 import os
 import codecs
+import subprocess
+import tempfile
 
 from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
@@ -158,6 +160,10 @@ class ClusterController(BaseController):
                                              'ip': node["ip"]
         }
         print node
+
+
+    def console(self, node, name):
+        raise NotImplementedError()
 
     def delete(self, name):
         # ToDo: Complete the implementation
@@ -503,3 +509,38 @@ class CloudController(BaseController):
 
         self.conn.ex_associate_address_with_node(node, requested_address)
         return requested_address.ip
+
+    def console(self, node_id, keypair_name):
+        log = logging.getLogger("node.console")
+        keypair_config = self._get_keypair_config_container()
+        config_directory = self.config["config_directory"]
+        if keypair_name not in keypair_config:
+            log.error("Keypair named %s is not in localconfig", keypair_name)
+            return False
+        keypair_priv_key = keypair_config[keypair_name]["private_key"]
+        config_registry = self.get_config_registry()
+        ssh_client = config_registry.get("global.ssh.client", "ssh")
+        ssh_user = config_registry.get("global.ssh.user", "ubuntu")
+
+        nodes = [node for node in self.list_nodes() if node["instance-status"] == "running" and node["instance-id"] == node_id]
+        if not nodes:
+            log.error("Could not find running node %s", node_id)
+            return False
+        public_ips = nodes[0].get("public-networking", {}).get("public-ips", [])
+        ip_address = public_ips[0]
+
+        named_key_temp_file = tempfile.NamedTemporaryFile(delete=False,dir=config_directory, suffix="_%s" %keypair_name, prefix="ssh_tmp_")
+        named_known_hosts_temp_file = tempfile.NamedTemporaryFile(delete=False,dir=config_directory, suffix="_%s" %keypair_name, prefix="ssh_known_")
+
+        with open(named_key_temp_file.name, "w") as tmp_fd:
+            tmp_fd.write(keypair_priv_key)
+
+        call_args = [ssh_client, "-i", named_key_temp_file.name, "-o", "StrictHostKeyChecking=no", "-o", "UserKnownHostsFile=%s" % named_known_hosts_temp_file.name, "%s@%s" % (ssh_user, ip_address)]
+        log.debug("Calling: '%s'", " ".join(call_args))
+        ret_code = subprocess.call(call_args)
+        if ret_code != 0:
+            log.error("Faild to connect to %s (node %s)", ip_address, node_id)
+            return False
+        return True
+
+
