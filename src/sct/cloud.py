@@ -186,10 +186,13 @@ class ClusterController(BaseController):
             node = "management_node"
 
         cluster_config = self.clusters_config.get(name, None)
-        cluster_nodes_config = cluster_config["nodes"]
         if cluster_config is None:
             log.error("Cluster %s does not exist", name)
             return False
+
+        if "nodes" not in cluster_config:
+            cluster_config["nodes"] = {}
+        cluster_nodes_config = cluster_config["nodes"]
 
         if node not in cluster_nodes_config:
             log.error("Node %s is not part of cluster %s", node, name)
