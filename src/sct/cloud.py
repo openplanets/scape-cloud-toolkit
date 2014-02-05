@@ -378,6 +378,7 @@ class CloudController(BaseController):
     def list_nodes(self, **kwargs):
         conn = self.conn
         euca_nodes = conn.list_nodes()
+        filter_instance_id=kwargs.get("filter_node", None)
         nodes = []
         for euca_node in euca_nodes:
             node = {'id': euca_node.uuid,
@@ -395,9 +396,24 @@ class CloudController(BaseController):
                         'private-dns': euca_node.extra.get('private_dns', None),
                     }
             }
+            if filter_instance_id is not None:
+                if node["instance-id"]!=filter_instance_id:
+                    continue
             nodes.append(node)
 
         return nodes
+
+    def terminate_node(self, instance_id):
+        log = logging.getLogger("terminate_node")
+        instances = self.get_libcloud_nodes(instance_id)
+        if not instances:
+            log.error("Could not find node with instance id: %s", instance_id)
+            return False
+
+        assert len(instances) == 1
+        instance = instances[0]
+        self.conn.destroy_node(instance)
+        return True
 
     def list_images(self, **kwargs):
         log = logging.getLogger("list_images")

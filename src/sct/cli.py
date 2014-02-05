@@ -175,6 +175,11 @@ def main():
                                                    help="Path to the file hosting userdata")
     euca_create_node_parser.set_defaults(func=cc.create_node(cfg))
 
+    euca_terminate_node_parser = euca_subparsers.add_parser("terminate-node")
+    euca_terminate_node_parser.add_argument("--instance-id", type=str, required=True,
+                                            help="The node that should be terminated")
+    euca_terminate_node_parser.set_defaults(func=cc.terminate_node(cfg))
+
     euca_create_security_group = euca_subparsers.add_parser("create-security-group")
     euca_create_security_group.add_argument("--name", type=str, required=True, help="Name of the security group")
     euca_create_security_group.add_argument("--description", type=str, required=False,
