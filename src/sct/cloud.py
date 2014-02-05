@@ -129,6 +129,8 @@ class ClusterController(BaseController):
             return False
         self.clusters_config[name] = {}
         cluster_config = self.clusters_config[name]
+        cluster_config["nodes"] = {}
+        cluster_nodes_config=cluster_config["nodes"]
 
         requested_size = size or config_registry.get('cluster.default_size', None)
         requested_image = image or config_registry.get('cluster.default_image', None)
@@ -146,16 +148,32 @@ class ClusterController(BaseController):
             log.error("Security group not specified and not defined in config (cluster.default_security_group)")
             return False
 
+        if 'main_keypair' not in cluster_config:
+            cluster_config['main_keypair'] = "%s_MainKeypair" % name
+        keypair_name = cluster_config['main_keypair']
+
+
+        found_keypairs = self.cloud_controller.list_keypairs(name=keypair_name)
+        if found_keypairs:
+            keypair_name = found_keypairs[0].name  # NoOp
+        else:
+            result = self.cloud_controller.create_keypair(name=keypair_name)
+            if not result:
+                log.error("Failed to create keypair %s for cluster %s", keypair_name, name)
+                return False
+
         management_node_name = "%s_Manager" % name
 
         node = self.cloud_controller.create_node(name=management_node_name, size=requested_size, image=requested_image,
-                                                 security_group=requested_security_group, auto_allocate_address=True)
+                                                 security_group=requested_security_group, auto_allocate_address=True,
+                                                 keypair_name=keypair_name)
 
         if not node:
             log.error("Error creating management node.")
             return False
 
-        cluster_config["management_node"] = {'name': management_node_name,
+
+        cluster_nodes_config["management_node"] = {'name': management_node_name,
                                              'instance_id': node["instance_id"],
                                              'ip': node["ip"]
         }
@@ -163,7 +181,28 @@ class ClusterController(BaseController):
 
 
     def console(self, node, name):
-        raise NotImplementedError()
+        log = logging.getLogger("cluster.console")
+        if node is None:
+            node = "management_node"
+
+        cluster_config = self.clusters_config.get(name, None)
+        cluster_nodes_config = cluster_config["nodes"]
+        if cluster_config is None:
+            log.error("Cluster %s does not exist", name)
+            return False
+
+        if node not in cluster_nodes_config:
+            log.error("Node %s is not part of cluster %s", node, name)
+            return False
+
+
+        node_configuration = cluster_nodes_config[node]
+        node_id = node_configuration["instance_id"]
+        keypair_name = cluster_config['main_keypair']
+
+        log.debug("Trying to gain console access to %s in cluster %s", node, name)
+
+        self.cloud_controller.console(node_id, keypair_name)
 
     def delete(self, name):
         # ToDo: Complete the implementation
