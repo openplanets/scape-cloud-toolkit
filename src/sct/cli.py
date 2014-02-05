@@ -164,6 +164,7 @@ def main():
     euca_create_node_parser.add_argument("--network-setup-timeout", type=int, required=False, default=120,
                                          help="Number of seconds to wait for the Cloud to setup the private network.")
     euca_create_node_parser.add_argument("--security-group", type=str, required=True, help="Name for the new node")
+    euca_create_node_parser.add_argument("--keypair-name", type=str, required=False, help="The name of the keypair to use")
     euca_create_node_parser.add_argument("--auto-allocate-address", action="store_true", required=False, default=False,
                                          help="Auto allocate address")
     euca_create_node_parser_exclusive = euca_create_node_parser.add_mutually_exclusive_group()
@@ -236,6 +237,10 @@ def main():
     delete_cluster_parser = cluster_subparsers.add_parser("delete")
     delete_cluster_parser.add_argument("--name", type=str, required=True, help="The name of the cluster to be deleted")
     delete_cluster_parser.set_defaults(func=cc.cluster.delete(cfg))
+    console_cluster_parser = cluster_subparsers.add_parser("console")
+    console_cluster_parser.add_argument("--node", type=str, required=False, help="The node to open the connection to")
+    console_cluster_parser.add_argument("--name", type=str, required=True, help="The name of the cluster")
+    console_cluster_parser.set_defaults(func=cc.cluster.console(cfg))
 
 
     ###### Handle

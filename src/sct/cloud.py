@@ -182,8 +182,11 @@ class CloudController(BaseController):
             self.cluster.init()
 
     def create_node(self, name=None, size=None, image=None, userdata=None, userdata_file=None,
-                    network_setup_timeout=200, auto_allocate_address=False, security_group=None):
+                    network_setup_timeout=200, auto_allocate_address=False, security_group=None, keypair_name=None):
         log = logging.getLogger("create_node")
+
+        kwargs = {}
+
         requested_node_size = size
         requested_node_image = image
         requested_node_name = name
@@ -211,6 +214,20 @@ class CloudController(BaseController):
         node_images = [image for image in self.conn.list_images() if image.id == requested_node_image]
         log.debug("Looking up existing nodes")
         matching_nodes = [node for node in self.conn.list_nodes() if node.name == requested_node_name]
+
+        requested_keypair_name = None
+        if keypair_name is not None:
+            log.debug("Looking up keypairs")
+            matching_keypairs = [keypair for keypair in self.list_keypairs(name=keypair_name)]
+            if matching_keypairs:
+                requested_keypair_name=matching_keypairs[0].name
+                kwargs["ex_keyname"] = requested_keypair_name
+            else:
+                log.error("Could not find requested keypair: %s", keypair_name)
+                return False
+        else:
+            log.error("No keypair setup for node")
+
 
         if matching_nodes:
             log.critical("Request node name (%s) is in use", requested_node_name)
@@ -245,7 +262,7 @@ class CloudController(BaseController):
 
         self.conn.create_node(name=requested_node_name, image=node_image, size=node_size,
                               ex_addressingtype="private", ex_security_groups=[requested_security_group, ],
-                              ex_userdata=requested_userdata)
+                              ex_userdata=requested_userdata, **kwargs)
 
         start_time = time.time()
         log.debug("Waiting for the setup of the private network. Maximum duration = %f seconds",
