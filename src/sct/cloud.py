@@ -44,6 +44,45 @@ class BaseController(object):
         if 'config' not in self.global_config:
             self.global_config['config'] = {}
         return self.global_config.get('config')
+    def _get_keypair_config_container(self):
+        config = self.configObj.config
+        if 'keypairs' in config:
+            return config.get('keypairs')
+        else:
+            config["keypairs"] = {}
+            return config.get('keypairs')
+
+    def list_keypairs(self, **args):
+        name = args["name"]
+        all_keypairs = self.conn.list_key_pairs()
+        keypairs = []
+        for keypair in all_keypairs:
+            if name is None:
+                keypairs.append(keypair)
+            elif keypair.name == name:
+                keypairs.append(keypair)
+            else:
+                continue
+        return keypairs
+
+
+    def create_keypair(self, **kwargs):
+        log = logging.getLogger("create_keypair")
+        name = kwargs.get("name")
+        config = self._get_keypair_config_container()
+        keypairs = self.list_keypairs(name=name)
+        if keypairs:
+            log.critical("Keypair %s already exists", name)
+            return False
+        keypair = self.conn.create_key_pair(name)
+
+        config[name] = {
+            'private_key': keypair.private_key,
+            'public_key': keypair.public_key
+        }
+
+        return True
+
 
 
 class ClusterController(BaseController):
@@ -428,42 +467,3 @@ class CloudController(BaseController):
 
         self.conn.ex_associate_address_with_node(node, requested_address)
         return requested_address.ip
-
-    def _get_keypair_config_container(self):
-        config = self.configObj.config
-        if 'keypairs' in config:
-            return config.get('keypairs')
-        else:
-            config["keypairs"] = {}
-            return config.get('keypairs')
-
-    def list_keypairs(self, **args):
-        name = args["name"]
-        all_keypairs = self.conn.list_key_pairs()
-        keypairs = []
-        for keypair in all_keypairs:
-            if name is None:
-                keypairs.append(keypair)
-            elif keypair.name == name:
-                keypairs.append(keypair)
-            else:
-                continue
-        return keypairs
-
-
-    def create_keypair(self, **kwargs):
-        log = logging.getLogger("create_keypair")
-        name = kwargs.get("name")
-        config = self._get_keypair_config_container()
-        keypairs = self.list_keypairs(name=name)
-        if keypairs:
-            log.critical("Keypair %s already exists", name)
-            return False
-        keypair = self.conn.create_key_pair(name)
-
-        config[name] = {
-            'private_key': keypair.private_key,
-            'public_key': keypair.public_key
-        }
-
-        return True
