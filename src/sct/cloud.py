@@ -31,6 +31,7 @@ from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
 
 import libcloud.security
+from sct.cloudinit import CloudInit, CloudConfig, DefaultPuppetCloudConfig, DefaultJavaCloudCloudConfig, PuppetMasterCloudConfig, PuppetMasterInitCloudBashScript
 
 
 class BaseController(object):
@@ -41,11 +42,9 @@ class BaseController(object):
         self.global_config = None
         self._initialized = False
 
-
     def init(self):
         if not self._initialized:
             self.global_config = self.configObj.config
-
 
     def disable_ssl_check(self):
         # ToDo: Find a way to workaround in a sane way the warning
@@ -122,6 +121,7 @@ class ClusterController(BaseController):
 
     def create(self, name, image, size, security_group):
         log = logging.getLogger("cluster.create")
+
         config_registry = self.get_config_registry()
         log.debug('Trying to create cluster named "%s"', name)
         if name in self.clusters_config:
@@ -164,9 +164,21 @@ class ClusterController(BaseController):
 
         management_node_name = "%s_Manager" % name
 
+        cloudInit = CloudInit()
+        configuration = {
+            'apt_update': True, # Runs `apt-get update` on first run
+            'apt_upgrade': False, #  Runs `apt-get upgrade
+            #'byobu_by_default': "system"
+        }
+        cloudInit.add_handler(CloudConfig(configuration))
+        #cloudInit.add_handler(DefaultPuppetCloudConfig())
+        cloudInit.add_handler(PuppetMasterCloudConfig())
+        cloudInit.add_handler(PuppetMasterInitCloudBashScript())
+        #cloudInit.add_handler(DefaultJavaCloudCloudConfig()) # Install java from webupd8
+
         node = self.cloud_controller.create_node(name=management_node_name, size=requested_size, image=requested_image,
                                                  security_group=requested_security_group, auto_allocate_address=True,
-                                                 keypair_name=keypair_name)
+                                                 keypair_name=keypair_name, userdata=str(cloudInit))
 
         if not node:
             log.error("Error creating management node.")
