@@ -277,7 +277,7 @@ class CloudController(BaseController):
             log.error("Failed to create node %s", requested_node_name)
             return False
 
-        response = {'id': node.id, 'instance_id': node.extra['instance_id']}
+        response = {'id': node.id, 'name': node.name, 'instance_id': node.extra['instance_id']}
         if requested_autoallocate_address:
             addr = self.associate_address(instance_id=node.extra['instance_id'])
             response["ip"] = addr
