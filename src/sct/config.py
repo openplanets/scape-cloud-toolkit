@@ -84,6 +84,8 @@ class ConfigFile(object):
             self.loaded = True
 
         expected_cfg_dir_location = "%s.d" % config_file
+        if not "config_directory" in config:
+            config["config_directory"] = expected_cfg_dir_location
         cfg_dir = config.get("config_directory", expected_cfg_dir_location)
         if expected_cfg_dir_location != cfg_dir: # Validate location
             cfg_dir = expected_cfg_dir_location
