@@ -1,0 +1,6 @@
+SCAPE Cloud Toolkit
+Copyright 2014 Universitatea de Vest din Timisoara
+
+This product includes software developed at
+West University of Timisoara (http://www.uvt.ro/).
+
