@@ -217,11 +217,21 @@ class ClusterController(BaseController):
     def delete(self, name):
         # ToDo: Complete the implementation
         log = logging.getLogger("cluster.delete")
-        if name in self.clusters_config:
-            del self.clusters_config[name]
-            return True
-        log.warn("No cluster with name '%s' to delete", name)
-        return False
+
+        if name not in self.clusters_config:
+            log.warn("No cluster with name '%s' to delete", name)
+            return False
+
+        cluster_config = self.clusters_config.get(name)["nodes"]
+        cluster_config_copy = cluster_config.copy()
+        for node_name, node_value in cluster_config_copy.items():
+            node_instance_id = node_value["instance_id"]
+            log.info("Deleting node `%s` (%s)", node_name, node_instance_id)
+            self.cloud_controller.terminate_node(node_instance_id)
+            del cluster_config[node_name]
+
+        del self.clusters_config[name]
+        return True
 
 
 class CloudController(BaseController):
