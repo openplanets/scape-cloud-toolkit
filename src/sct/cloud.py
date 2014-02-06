@@ -27,8 +27,8 @@ import codecs
 import subprocess
 import tempfile
 
-from libcloud.compute.types import Provider
-from libcloud.compute.providers import get_driver
+from libcloud.compute.types import Provider as ComputeProvider
+from libcloud.compute.providers import get_driver as get_compute_driver
 
 import libcloud.security
 from sct.cloudinit import CloudInit, CloudConfig, DefaultPuppetCloudConfig, DefaultJavaCloudCloudConfig, PuppetMasterCloudConfig, PuppetMasterInitCloudBashScript
@@ -255,7 +255,7 @@ class CloudController(BaseController):
             self.config = self.configObj.config
             if 'eucalyptus_cert_file_path' in config:
                 libcloud.security.CA_CERTS_PATH.append(config["eucalyptus_cert_file_path"])
-            self.driver = get_driver(Provider.EUCALYPTUS)
+            self.driver = get_compute_driver(ComputeProvider.EUCALYPTUS)
             ec2_url = config['ec2_url']
             url = urlparse.urlparse(ec2_url)
             self.conn = self.driver(config['ec2_access_key'],
