@@ -367,9 +367,7 @@ class CloudController(BaseController):
                 # ToDo: At this stage the node will remain in "limbo"
                 log.critical("The Cloud failed to setup the addresses in expected time")
                 return False
-            print self.conn.list_nodes()
             nodes = [node for node in self.conn.list_nodes() if node.name == requested_node_name]
-            print nodes
             if not nodes:
                 log.error("Failed to create node %s", requested_node_name)
                 return False
