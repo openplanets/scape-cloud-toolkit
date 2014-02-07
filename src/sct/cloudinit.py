@@ -19,14 +19,14 @@ limitations under the License.
 @copyright: 2014 Universitatea de Vest din Timișoara
 """
 import StringIO
-
-import pkg_resources
+from email.mime.application import MIMEApplication
 
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 import yaml
 import base64
+import gzip
 
 
 class BaseHandler(object):
@@ -173,12 +173,23 @@ class CloudInit(object):
     def add_handler(self, handler):
         self.handler.append(handler)
 
-    def generate(self):
+    def _generate(self):
         message = MIMEMultipart()
         for hndlr in self.handler:
             message.attach(hndlr.to_mime())
 
         return message.as_string()
+
+    def generate(self, compress=True):
+        if not compress:
+            return self._generate()
+
+        strfd = StringIO.StringIO()
+        with gzip.GzipFile(fileobj=strfd, mode="w") as gzfd:
+            gzfd.write(self._generate())
+        strfd.seek(0)
+
+        return strfd.read()
 
     def __str__(self):
         return self.generate()

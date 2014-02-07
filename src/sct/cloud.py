@@ -183,7 +183,7 @@ class ClusterController(BaseController):
 
         node = self.cloud_controller.create_node(name=management_node_name, size=requested_size, image=requested_image,
                                                  security_group=requested_security_group, auto_allocate_address=True,
-                                                 keypair_name=keypair_name, userdata=str(cloudInit))
+                                                 keypair_name=keypair_name, userdata=cloudInit.generate(compress=False))
 
         if not node:
             log.error("Error creating management node.")
