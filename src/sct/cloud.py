@@ -350,11 +350,12 @@ class CloudController(BaseController):
 
         log.info("Creating node %s (image=%s, size=%s)", requested_node_name, requested_node_image,
                  requested_node_size)
-        log.debug("Creating with prive addressing type.")
+        log.debug("Creating with private addressing type.")
 
-        self.conn.create_node(name=requested_node_name, image=node_image, size=node_size,
+        node = self.conn.create_node(name=requested_node_name, image=node_image, size=node_size,
                               ex_addressingtype="private", ex_security_groups=[requested_security_group, ],
                               ex_userdata=requested_userdata, **kwargs)
+
 
         start_time = time.time()
         log.debug("Waiting for the setup of the private network. Maximum duration = %f seconds",
@@ -366,7 +367,9 @@ class CloudController(BaseController):
                 # ToDo: At this stage the node will remain in "limbo"
                 log.critical("The Cloud failed to setup the addresses in expected time")
                 return False
+            print self.conn.list_nodes()
             nodes = [node for node in self.conn.list_nodes() if node.name == requested_node_name]
+            print nodes
             if not nodes:
                 log.error("Failed to create node %s", requested_node_name)
                 return False
