@@ -294,17 +294,16 @@ class CloudController(BaseController):
         if security_group is None:
             raise ValueError("Argument `security_group` needs to be provided")
 
-        log.debug("Looking up security groups")
+
         sec_groups = self.list_security_groups()
         if requested_security_group not in sec_groups:
             log.error("Requested security group is not available")
             return False
 
-        log.debug("Looking up sizes")
         node_sizes = [size for size in self.conn.list_sizes() if size.id == requested_node_size]
-        log.debug("Looking up images")
+
         node_images = [image for image in self.conn.list_images() if image.id == requested_node_image]
-        log.debug("Looking up existing nodes")
+
         matching_nodes = [node for node in self.conn.list_nodes() if node.name == requested_node_name]
 
         requested_keypair_name = None
