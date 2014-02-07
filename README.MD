@@ -39,7 +39,7 @@ See: `~/scape/bin/sct-cli -vvvvv cloud-config euca -h`
 
 ### Configure EUCA Credentials
 
-`~/scape/bin/sct-cli -vvvvv cloud-config euca --autoconfig`
+`~/scape/bin/sct-cli -vvvvv cloud-config euca --autodetect`
 
 ### Create security Group
 
@@ -62,7 +62,7 @@ Define the default size of a image that will be used in a cluster:
 
 Define the default image that will be used in a cluster:
 
-`~/scape/bin/sct-cli -vvvvv cloud-config registry cluster.default_image=i-EEE43FFA`
+`~/scape/bin/sct-cli -vvvvv cloud-config registry cluster.default_image=emi-50733A74A`
 
 Define the default security group:
 
