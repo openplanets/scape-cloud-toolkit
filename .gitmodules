@@ -1,0 +1,3 @@
+[submodule "external/puppet-modules"]
+	path = external/puppet-modules
+	url = git@bitbucket.org:scapeuvt/puppet-modules.git
