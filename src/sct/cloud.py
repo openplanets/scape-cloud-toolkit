@@ -294,7 +294,6 @@ class CloudController(BaseController):
         if security_group is None:
             raise ValueError("Argument `security_group` needs to be provided")
 
-
         sec_groups = self.list_security_groups()
         if requested_security_group not in sec_groups:
             log.error("Requested security group is not available")
@@ -352,9 +351,8 @@ class CloudController(BaseController):
         log.debug("Creating with private addressing type.")
 
         node = self.conn.create_node(name=requested_node_name, image=node_image, size=node_size,
-                              ex_addressingtype="private", ex_security_groups=[requested_security_group, ],
-                              ex_userdata=requested_userdata, **kwargs)
-
+                                     ex_addressingtype="private", ex_security_groups=[requested_security_group, ],
+                                     ex_userdata=requested_userdata, **kwargs)
 
         start_time = time.time()
         log.debug("Waiting for the setup of the private network. Maximum duration = %f seconds",
