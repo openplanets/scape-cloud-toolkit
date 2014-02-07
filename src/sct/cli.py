@@ -246,6 +246,12 @@ def main():
     create_cluster_parser.add_argument("--image", type=str, required=False, help="Image used for the management image")
     create_cluster_parser.add_argument("--security-group", type=str, required=False,
                                        help="Security group used for the management image")
+    create_cluster_parser.add_argument("--module-repository-url", type=str, required=False,
+                                       help="The URL of the module repository")
+    create_cluster_parser.add_argument("--module-repository-branch", type=str, required=False,
+                                       help="The GIT repository branch to be used")
+    create_cluster_parser.add_argument("--module-repository-tag", type=str, required=False,
+                                       help="The GIT repository tag to be used")
     create_cluster_parser.set_defaults(func=cc.cluster.create(cfg))
     delete_cluster_parser = cluster_subparsers.add_parser("delete")
     delete_cluster_parser.add_argument("--name", type=str, required=True, help="The name of the cluster to be deleted")

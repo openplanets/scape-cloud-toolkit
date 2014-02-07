@@ -118,11 +118,11 @@ class ClusterController(BaseController):
             self._initialized = True
 
 
-    def create(self, name, image, size, security_group):
+    def create(self, name, image, size, security_group, module_repository_url, module_repository_branch,
+               module_repository_tag):
         log = logging.getLogger("cluster.create")
 
         config_registry = self.get_config_registry()
-        log.debug('Trying to create cluster named "%s"', name)
         if name in self.clusters_config:
             log.error("Cluster %s is already defined", name)
             return False
@@ -134,6 +134,12 @@ class ClusterController(BaseController):
         requested_size = size or config_registry.get('cluster.default_size', None)
         requested_image = image or config_registry.get('cluster.default_image', None)
         requested_security_group = security_group or config_registry.get('cluster.default_security_group', None)
+        requested_module_repository_url = module_repository_url or config_registry.get(
+            "cluster.default_module_repository_url")
+        requested_module_repository_branch = module_repository_branch or config_registry.get(
+            "cluster.default_module_repository_branch")
+        requested_module_repository_tag = module_repository_tag or config_registry.get(
+            "cluster.default_module_repository_tag")
 
         if requested_size is None:
             log.error("Size not specified and not defined in config (cluster.default_size)")
@@ -146,6 +152,17 @@ class ClusterController(BaseController):
         if requested_security_group is None:
             log.error("Security group not specified and not defined in config (cluster.default_security_group)")
             return False
+
+        if requested_module_repository_url is None:
+            log.warn(
+                "Puppet module repository is not specified and not defined in config (cluster.default_module_repository_url)")
+            log.info("Using repository https://bitbucket.org/scapeuvt/puppet-modules.git")
+            requested_module_repository_url = "https://bitbucket.org/scapeuvt/puppet-modules.git"
+
+        if requested_module_repository_branch is None:
+            log.warn(
+                "No module repository branch specified in call or config (cluster.default_module_repository_branch). Using `master`")
+            requested_module_repository_branch = "master"
 
         if 'main_keypair' not in cluster_config:
             cluster_config['main_keypair'] = "%s_MainKeypair" % name
@@ -175,7 +192,7 @@ class ClusterController(BaseController):
                                  "/etc/puppet_scape_master.pp"))
         #cloudInit.add_handler(DefaultPuppetCloudConfig())
         cloudInit.add_handler(PuppetMasterCloudConfig())
-        cloudInit.add_handler(PuppetMasterInitCloudBashScript())
+        cloudInit.add_handler(PuppetMasterInitCloudBashScript(URL=requested_module_repository_url))
 
         #cloudInit.add_handler(DefaultJavaCloudCloudConfig()) # Install java from webupd8
 

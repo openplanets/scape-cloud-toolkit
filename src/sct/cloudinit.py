@@ -23,6 +23,7 @@ from email.mime.application import MIMEApplication
 
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from string import Template
 
 import yaml
 import base64
@@ -146,7 +147,21 @@ class PuppetMasterCloudConfig(CloudConfig):
         CloudConfig.__init__(self, self.configuration)
 
 
-class PuppetMasterInitCloudBashScript(CloudSHScript):
+class SimpleStringTemplate(Template):
+    delimiter = "@"
+
+    def __init__(self, *args, **kwargs):
+        Template.__init__(self, *args, **kwargs)
+
+
+class FormattedCloudInitShScript(CloudSHScript):
+    def __init__(self, content, maps):
+        tmpl = SimpleStringTemplate(content)
+        new_content = tmpl.substitute(**maps)
+        CloudSHScript.__init__(self, new_content)
+
+
+class PuppetMasterInitCloudBashScript(FormattedCloudInitShScript):
     script = """
     . /etc/profile
     echo 'START=yes\nDAEMON_OPTS=""\n' > /etc/default/puppet
@@ -158,12 +173,19 @@ class PuppetMasterInitCloudBashScript(CloudSHScript):
 
     puppet module install puppetlabs/puppetdb
 
-    puppet apply /etc/puppet_scape_master.pp
+    #puppet apply /etc/puppet_scape_master.pp
+
+    mkdir -p /etc/scape/
+    apt-get install -y git
+    git clone @URL /etc/scape/modules
+
+
+    echo "*/10 * * * * /usr/bin/git --git-dir=/etc/scape/modules/.git --work-tree=/etc/scape/modules/  pull" >> /etc/crontab
 
     """
 
-    def __init__(self):
-        CloudSHScript.__init__(self, self.script)
+    def __init__(self, **kwargs):
+        FormattedCloudInitShScript.__init__(self, self.script, kwargs)
 
 
 class CloudInit(object):
