@@ -325,12 +325,11 @@ class CloudController(BaseController):
             return False
 
         if not node_sizes:
-            log.debug("Log sizes: %s", node_sizes)
-            log.critical("Requested size (%s) was not found", requested_node_image)
+            log.critical("Requested size (%s) was not found", requested_node_size)
             return False
 
         if not node_images:
-            log.critical("Requested size (%s) was not found", requested_node_size)
+            log.critical("Requested image (%s) was not found", requested_node_image)
             return False
 
         node_size = node_sizes[0]
