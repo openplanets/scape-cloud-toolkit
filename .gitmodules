@@ -1,3 +1,0 @@
-[submodule "puppet-java"]
-	path = puppet-java
-	url = git@bitbucket.org:scapeuvt/puppet-java.git
