@@ -158,7 +158,7 @@ class PuppetMasterInitCloudBashScript(CloudSHScript):
 
     puppet module install puppetlabs/puppetdb
 
-    #puppet apply /etc/puppet_scape_master.pp
+    puppet apply /etc/puppet_scape_master.pp
 
     """
 
