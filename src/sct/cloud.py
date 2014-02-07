@@ -350,6 +350,7 @@ class CloudController(BaseController):
 
         log.info("Creating node %s (image=%s, size=%s)", requested_node_name, requested_node_image,
                  requested_node_size)
+        log.debug("Creating with prive addressing type.")
 
         self.conn.create_node(name=requested_node_name, image=node_image, size=node_size,
                               ex_addressingtype="private", ex_security_groups=[requested_security_group, ],
