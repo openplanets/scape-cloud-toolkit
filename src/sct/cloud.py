@@ -26,12 +26,13 @@ import os
 import codecs
 import subprocess
 import tempfile
+import pkg_resources
 
 from libcloud.compute.types import Provider as ComputeProvider
 from libcloud.compute.providers import get_driver as get_compute_driver
 
 import libcloud.security
-from sct.cloudinit import CloudInit, CloudConfig, DefaultPuppetCloudConfig, DefaultJavaCloudCloudConfig, PuppetMasterCloudConfig, PuppetMasterInitCloudBashScript
+from sct.cloudinit import CloudInit, CloudConfig, DefaultPuppetCloudConfig, DefaultJavaCloudCloudConfig, PuppetMasterCloudConfig, PuppetMasterInitCloudBashScript, CloudConfigStoreFile
 
 
 class BaseController(object):
@@ -165,13 +166,20 @@ class ClusterController(BaseController):
         configuration = {
             'apt_update': True, # Runs `apt-get update` on first run
             'apt_upgrade': False, #  Runs `apt-get upgrade
+            'manage_etc_hosts': True,
             #'byobu_by_default': "system"
         }
         cloudInit.add_handler(CloudConfig(configuration))
+        cloudInit.add_handler(
+            CloudConfigStoreFile(pkg_resources.resource_string(__name__, "resources/puppet/bootstrap_master.pp"),
+                                 "/etc/puppet_scape_master.pp"))
         #cloudInit.add_handler(DefaultPuppetCloudConfig())
         cloudInit.add_handler(PuppetMasterCloudConfig())
         cloudInit.add_handler(PuppetMasterInitCloudBashScript())
+
         #cloudInit.add_handler(DefaultJavaCloudCloudConfig()) # Install java from webupd8
+
+        print "Current userdata size:", len(str(cloudInit))
 
         node = self.cloud_controller.create_node(name=management_node_name, size=requested_size, image=requested_image,
                                                  security_group=requested_security_group, auto_allocate_address=True,
@@ -185,7 +193,7 @@ class ClusterController(BaseController):
                                                    'instance_id': node["instance_id"],
                                                    'ip': node["ip"]
         }
-        print node
+        return True
 
 
     def console(self, node, name):
@@ -388,7 +396,7 @@ class CloudController(BaseController):
     def list_nodes(self, **kwargs):
         conn = self.conn
         euca_nodes = conn.list_nodes()
-        filter_instance_id=kwargs.get("filter_node", None)
+        filter_instance_id = kwargs.get("filter_node", None)
         nodes = []
         for euca_node in euca_nodes:
             node = {'id': euca_node.uuid,
@@ -407,7 +415,7 @@ class CloudController(BaseController):
                     }
             }
             if filter_instance_id is not None:
-                if node["instance-id"]!=filter_instance_id:
+                if node["instance-id"] != filter_instance_id:
                     continue
             nodes.append(node)
 

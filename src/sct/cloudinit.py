@@ -20,6 +20,8 @@ limitations under the License.
 """
 import StringIO
 
+import pkg_resources
+
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -68,6 +70,17 @@ class CloudSHScript(CloudUserScript):
         CloudUserScript.__init__(self, bash_content)
 
 
+class CloudConfigStoreFile(CloudSHScript):
+    def __init__(self, content, destination_file):
+        encoded_content = base64.encodestring(content)
+        content = """
+        cat <<EOF | base64 -d > %s
+%s
+EOF
+        """ % (destination_file, encoded_content)
+        CloudSHScript.__init__(self, content)
+
+
 class DefaultJavaCloudCloudConfig(CloudConfig):
     configuration = {
         'apt_sources': [# Add puppet lab repository
@@ -106,7 +119,7 @@ class DefaultPuppetCloudConfig(CloudConfig):
 
 
 class PuppetMasterCloudConfig(CloudConfig):
-    puppet_agent_init_config = base64.encodestring('START=yes\nDAEMON_OPTS="\n')
+    puppet_agent_init_config = 'START=yes\nDAEMON_OPTS=""\n'
 
     puppet_apt_repos = [
         {'source': 'deb http://apt.puppetlabs.com precise main',
@@ -125,15 +138,6 @@ class PuppetMasterCloudConfig(CloudConfig):
             "puppetmaster-common",
             "puppetmaster"
         ],
-        'write_files': [
-            {
-                'encoding': 'b64',
-                'content': puppet_agent_init_config,
-                'owner': 'root:root',
-                'path': '/etc/default/puppet',
-                'permissions': '0644'
-            }
-        ]
     }
 
     def __init__(self):
@@ -146,6 +150,13 @@ class PuppetMasterInitCloudBashScript(CloudSHScript):
     echo 'START=yes\nDAEMON_OPTS=""\n' > /etc/default/puppet
     sed -i 's|127.0.0.1|127.0.0.1 puppet|g' /etc/hosts
     /etc/init.d/puppet start
+
+    echo "*" > /etc/puppet/autosign.conf
+    /etc/init.d/puppetmaster restart
+
+    puppet module install puppetlabs/puppetdb
+
+    #puppet apply /etc/puppet_scape_master.pp
 
     """
 
