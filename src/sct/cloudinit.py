@@ -137,7 +137,8 @@ class PuppetMasterCloudConfig(CloudConfig):
         'packages': [
             "puppet",
             "puppetmaster-common",
-            "puppetmaster"
+            "puppetmaster",
+            "git"
         ],
     }
 
