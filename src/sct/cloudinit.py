@@ -110,7 +110,8 @@ class DefaultPuppetCloudConfig(CloudConfig):
         #'apt_sources': puppet_apt_repos,  # Add puppet lab repository
         'packages': [
             "puppet",
-            "puppetmaster-common"
+            "puppetmaster-common",
+            "git"
         ]
     }
 
