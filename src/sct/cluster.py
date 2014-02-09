@@ -19,7 +19,9 @@ limitations under the License.
 @copyright: 2014 Universitatea de Vest din Timișoara
 """
 
-from sct.cloud import BaseController
+import logging
+import pkg_resources
+from sct.controller import BaseController
 from sct.cloudinit import CloudInit, CloudConfig, DefaultPuppetCloudConfig, DefaultJavaCloudCloudConfig
 from sct.cloudinit import PuppetMasterCloudConfig, PuppetMasterInitCloudBashScript, CloudConfigStoreFile
 
