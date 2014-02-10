@@ -30,6 +30,7 @@ import pkg_resources
 from sct.config import CONFIG_FILE, argparse_euca_helper
 from sct.config import ConfigFile
 from sct.cloud import CloudController
+from sct.templates import get_available_templates
 
 
 class ControllerWrapper(object):
@@ -260,6 +261,12 @@ def main():
     console_cluster_parser.add_argument("--node", type=str, required=False, help="The node to open the connection to")
     console_cluster_parser.add_argument("--name", type=str, required=True, help="The name of the cluster")
     console_cluster_parser.set_defaults(func=cc.cluster.console(cfg))
+
+    add_node_cluster_parser = cluster_subparsers.add_parser("add-node")
+    add_node_cluster_parser.add_argument("--template-name", required=True, choices=get_available_templates(),
+                                         help="Template to be used")
+    add_node_cluster_parser.add_argument("--cluster-name", required=True, help="Cluster Name")
+    add_node_cluster_parser.set_defaults(func=cc.cluster.add_node(cfg))
 
 
     ###### Handle

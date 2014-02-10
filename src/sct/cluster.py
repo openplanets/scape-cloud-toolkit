@@ -24,6 +24,7 @@ import pkg_resources
 from sct.controller import BaseController
 from sct.cloudinit import CloudInit, CloudConfig, DefaultPuppetCloudConfig, DefaultJavaCloudCloudConfig
 from sct.cloudinit import PuppetMasterCloudConfig, PuppetMasterInitCloudBashScript, CloudConfigStoreFile
+from sct.templates import get_template
 
 
 class ClusterController(BaseController):
@@ -138,4 +139,109 @@ class ClusterController(BaseController):
                                                    'ip': node["ip"],
                                                    'private_ips': node["private_ips"]
         }
+        return True
+
+    def get_template_nodes(self, cluster_config, template_name):
+        """
+        Return all nodes implementing a template
+        """
+        nodes = cluster_config.get("nodes", {})
+        result = []
+        for node_name, node_entry in nodes.items():
+            node_template = node_entry.get("template", None)
+            if node_template is None:
+                continue
+            if node_template == template_name:
+                result.append((node_name, node_entry))
+        return result
+
+
+    def add_node(self, template_name, cluster_name):
+        log = logging.getLogger("cluster.add_node")
+        config_registry = self.get_config_registry()
+        cluster_config = self.clusters_config.get(cluster_name)
+        if cluster_config is None:
+            log.error("No such cluster: %s", cluster_name)
+            return False
+        template = get_template(template_name)
+
+        #ToDo: We should use cluster wide config first and after that global config
+        requested_size = config_registry.get('cluster.default_size', None)
+        requested_image = config_registry.get('cluster.default_image', None)
+        requested_security_group = config_registry.get('cluster.default_security_group', None)
+
+        if requested_size is None:
+            log.error("Node size is unknown")
+            return False
+
+        if requested_security_group is None:
+            log.error("Security Group is unknown")
+            return False
+
+        if requested_image is None:
+            log.error("Requested image is unknown")
+            return False
+
+        if 'main_keypair' not in cluster_config:
+            log.error("Invalid cluster. Keypair not defined.")
+            return False
+        keypair_name = cluster_config['main_keypair']
+
+        nodes = self.get_template_nodes(cluster_config, template_name)
+        template_nodes_count = len(nodes)
+        if template["max-node-count"] is None:
+            template["max-node-count"] = 10000
+        if template_nodes_count >= template['max-node-count']:
+            log.error("Can not create node as it would exceed the maximum allowed nodes (%d) for template %s",
+                      template['max-node-count'], template_name)
+            return False
+
+        mgmt_node_config = cluster_config.setdefault('nodes',{}).get('management_node', None)
+        if mgmt_node_config is None:
+            log.error("Invalid cluster. Management node is missing. Aborting")
+            return False
+        mgmt_node_privip = mgmt_node_config['private_ips']
+        if not mgmt_node_privip:
+            log.error("Management does not seem to have any private IP's. Aborting!")
+            return False
+        puppet_server = mgmt_node_privip[0]
+        log.info("Configuring node to use puppet server: %s", puppet_server)
+        cloudInitHandler = template['cloudinit'](cluster_config=cluster_config, puppet_server=puppet_server)
+        cloudInit = CloudInit([cloudInitHandler, ])
+
+        user_data = cloudInit.generate(compress=False)
+        user_data_compress = cloudInit.generate(compress=True)
+        node_names = [i[0] for i in nodes]
+        if template_nodes_count == 0:
+            node_index = 1
+        else:
+            for idx in range(1, template_nodes_count+2):
+                desired_node_name = "%s_%s_%s" % (cluster_name, cloudInitHandler.shortName, idx)
+                if desired_node_name in node_names:
+                    continue
+                node_index = idx
+                break
+
+        desired_node_name = "%s_%s_%s" % (cluster_name, cloudInitHandler.shortName, node_index)
+        log.debug("Desired node name: %s", desired_node_name)
+        log.debug("User data size: raw / compressed = %d/%d", len(user_data), len(user_data_compress))
+        log.debug("Attempting to start node.")
+
+        cloud_controller = self.cloud_controller
+        node = cloud_controller.create_node(name=desired_node_name, size=requested_size, image=requested_image,
+                                            security_group=requested_security_group, auto_allocate_address=True,
+                                            keypair_name=keypair_name, userdata=user_data)
+        if not node:
+            log.error("Failed to create node.")
+            return False
+
+        cluster_config_nodes = cluster_config['nodes']
+        cluster_config_nodes[desired_node_name] = {
+            'name': desired_node_name,
+            'instance_id': node["instance_id"],
+            'ip': node["ip"],
+            'private_ips': node["private_ips"],
+            'template': template_name
+        }
+
         return True

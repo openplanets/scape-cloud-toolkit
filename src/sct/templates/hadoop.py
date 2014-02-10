@@ -29,6 +29,7 @@ class HadoopServer(DefaultNodeTemplate):
 
 
 class HadoopWorker(DefaultNodeTemplate):
+    shortName="hdpWorker"
     def __init__(self, *args, **kwargs):
         DefaultNodeTemplate.__init__(self, *args, **kwargs)
 
