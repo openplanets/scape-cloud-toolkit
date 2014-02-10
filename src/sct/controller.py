@@ -95,6 +95,8 @@ class BaseController(object):
         log = logging.getLogger("cluster.console")
         if node is None:
             node = "management_node"
+        else:
+            node = "%s_%s" % (name, node)
 
         cluster_config = self.clusters_config.get(name, None)
         if cluster_config is None:
