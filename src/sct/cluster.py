@@ -135,5 +135,6 @@ class ClusterController(BaseController):
         cluster_nodes_config["management_node"] = {'name': management_node_name,
                                                    'instance_id': node["instance_id"],
                                                    'ip': node["ip"]
+                                                   'private_ips': node["private_ips"]
         }
         return True
