@@ -227,7 +227,7 @@ class CloudInit(object):
             return self._generate()
 
         strfd = StringIO.StringIO()
-        with gzip.GzipFile(fileobj=strfd, mode="w") as gzfd:
+        with gzip.GzipFile(fileobj=strfd, mode="w",compresslevel=9) as gzfd:
             gzfd.write(self._generate())
         strfd.seek(0)
 
