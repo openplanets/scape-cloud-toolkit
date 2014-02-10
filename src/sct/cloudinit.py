@@ -41,14 +41,32 @@ class CloudConfig(BaseHandler):
     ToDo: find a way to work around
     """
 
-    def __init__(self, configuration):
-        self.configuration = configuration
+    def __init__(self, configuration={}):
+        self.__configuration = configuration
 
     def to_mime(self):
         buffer = StringIO.StringIO()
-        yaml.dump(self.configuration, buffer, default_flow_style=False)
-        message = MIMEText(buffer.getvalue(), "cloud-config", "utf8")
+        yaml.dump(self.__configuration, buffer, default_flow_style=False)
+        value = buffer.getvalue()
+        message = MIMEText(value, "cloud-config", "utf8")
         return message
+
+    def _get_configuration(self):
+        return self.__configuration
+
+
+    def add_apt_source(self, source):
+        apt_sources = self.__configuration.setdefault('apt_sources', [])
+        apt_sources.append(source)
+
+    def add_package(self, package_spec):
+        packages = self.__configuration.setdefault('packages', [])
+        packages.append(package_spec)
+
+    def set_option(self, key, value):
+        if key in self.__configuration:
+            raise KeyError("Duplicate key %s. It already has the value: %s", key, self.__configuration[key])
+        self.__configuration[key] = value
 
 
 class CloudUserScriptFile(BaseHandler):
