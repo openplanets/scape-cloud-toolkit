@@ -232,5 +232,5 @@ class CloudInit(object):
         return strfd.read()
 
     def __str__(self):
-        return self.generate()
+        return self.generate(compress=False)
 
