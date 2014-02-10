@@ -76,10 +76,10 @@ class CloudUserScriptFile(BaseHandler):
 
 class CloudUserScript(BaseHandler):
     def __init__(self, content):
-        self.content = content
+        self.__script_content = content
 
     def to_mime(self):
-        message = MIMEText(self.content, "x-shellscript", "utf8")
+        message = MIMEText(self.__script_content, "x-shellscript", "utf8")
         return message
 
 
@@ -207,8 +207,10 @@ class PuppetMasterInitCloudBashScript(FormattedCloudInitShScript):
 
 
 class CloudInit(object):
-    def __init__(self):
+    def __init__(self, handlers=[]):
         self.handler = []
+        if handlers:
+            self.handler.extend(handlers)
 
     def add_handler(self, handler):
         self.handler.append(handler)
