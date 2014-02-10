@@ -91,3 +91,47 @@ class BaseController(object):
         }
 
         return True
+    def console(self, node, name):
+        log = logging.getLogger("cluster.console")
+        if node is None:
+            node = "management_node"
+
+        cluster_config = self.clusters_config.get(name, None)
+        if cluster_config is None:
+            log.error("Cluster %s does not exist", name)
+            return False
+
+        if "nodes" not in cluster_config:
+            cluster_config["nodes"] = {}
+        cluster_nodes_config = cluster_config["nodes"]
+
+        if node not in cluster_nodes_config:
+            log.error("Node %s is not part of cluster %s", node, name)
+            return False
+
+        node_configuration = cluster_nodes_config[node]
+        node_id = node_configuration["instance_id"]
+        keypair_name = cluster_config['main_keypair']
+
+        log.debug("Trying to gain console access to %s in cluster %s", node, name)
+
+        self.cloud_controller.console(node_id, keypair_name)
+
+    def delete(self, name):
+        # ToDo: Complete the implementation
+        log = logging.getLogger("cluster.delete")
+
+        if name not in self.clusters_config:
+            log.warn("No cluster with name '%s' to delete", name)
+            return False
+
+        cluster_config = self.clusters_config.get(name)["nodes"]
+        cluster_config_copy = cluster_config.copy()
+        for node_name, node_value in cluster_config_copy.items():
+            node_instance_id = node_value["instance_id"]
+            log.info("Deleting node `%s` (%s)", node_name, node_instance_id)
+            self.cloud_controller.terminate_node(node_instance_id)
+            del cluster_config[node_name]
+
+        del self.clusters_config[name]
+        return True
