@@ -6,3 +6,5 @@
 . /etc/profile
 
 grep "puppet" /etc/hosts || echo "@puppetServer puppet" >> /etc/hosts
+echo -e "START=yes\nDAEMON_OPTS=\"\"\n" > /etc/default/puppet
+/etc/init.d/puppet start
