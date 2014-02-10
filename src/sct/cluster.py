@@ -121,12 +121,13 @@ class ClusterController(BaseController):
         cloudInit.add_handler(PuppetMasterInitCloudBashScript(URL=requested_module_repository_url))
 
         #cloudInit.add_handler(DefaultJavaCloudCloudConfig()) # Install java from webupd8
-
-        print "Current userdata size:", len(str(cloudInit))
+        userdata = str(cloudInit)
+        userdata_compressed = cloudInit.generate(compress=True)
+        log.debug("User data size: raw / compressed = %d/%d", len(userdata), len(userdata_compressed))
 
         node = self.cloud_controller.create_node(name=management_node_name, size=requested_size, image=requested_image,
                                                  security_group=requested_security_group, auto_allocate_address=True,
-                                                 keypair_name=keypair_name, userdata=cloudInit.generate(compress=False))
+                                                 keypair_name=keypair_name, userdata=userdata)
 
         if not node:
             log.error("Error creating management node.")
