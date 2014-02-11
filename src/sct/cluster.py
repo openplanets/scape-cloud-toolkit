@@ -21,6 +21,7 @@ limitations under the License.
 
 import logging
 import pkg_resources
+import uuid
 from sct.controller import BaseController
 from sct.cloudinit import CloudInit, CloudConfig, DefaultPuppetCloudConfig, DefaultJavaCloudCloudConfig
 from sct.cloudinit import PuppetMasterCloudConfig, PuppetMasterInitCloudBashScript, CloudConfigStoreFile
@@ -105,7 +106,7 @@ class ClusterController(BaseController):
                 return False
 
         management_node_name = "%s_Manager" % name
-
+        hmac_secret = uuid.uuid4().get_hex()
         cloudInit = CloudInit()
         configuration = {
             'apt_update': True, # Runs `apt-get update` on first run
@@ -117,9 +118,12 @@ class ClusterController(BaseController):
         cloudInit.add_handler(
             CloudConfigStoreFile(pkg_resources.resource_string(__name__, "resources/puppet/bootstrap_master.pp"),
                                  "/etc/puppet_scape_master.pp"))
+        cloudInit.add_handler(CloudConfigStoreFile(pkg_resources.resource_string(__name__, "resources/puppet/puppet.conf"),
+                                                   "/etc/puppet/puppet.conf"))
         #cloudInit.add_handler(DefaultPuppetCloudConfig())
         cloudInit.add_handler(PuppetMasterCloudConfig())
-        cloudInit.add_handler(PuppetMasterInitCloudBashScript(URL=requested_module_repository_url))
+        cloudInit.add_handler(
+            PuppetMasterInitCloudBashScript(URL=requested_module_repository_url, HMACSECREET=hmac_secret))
 
         #cloudInit.add_handler(DefaultJavaCloudCloudConfig()) # Install java from webupd8
         userdata = str(cloudInit)

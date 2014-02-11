@@ -200,6 +200,10 @@ class PuppetMasterInitCloudBashScript(FormattedCloudInitShScript):
     mkdir -p /etc/scape/
     apt-get install -y git
     git clone @URL /etc/scape/modules
+    curl -o /usr/local/bin/skapur http://ftp.info.uvt.ro/projects/scape/tools/skapur/skapur
+    chmod +x /usr/local/bin/skapur
+    chown puppet /etc/puppet/manifests/
+    screen -A -m -d -S skapurpuppet sudo -u puppet /usr/local/bin/skapur  -address="0.0.0.0:8088" -store /etc/puppet/manifests/ -secret "@HMACSECREET"
 
 
     echo "*/10 * * * * /usr/bin/git --git-dir=/etc/scape/modules/.git --work-tree=/etc/scape/modules/  pull" >> /etc/crontab
