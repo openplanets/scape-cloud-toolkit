@@ -184,12 +184,16 @@ class PuppetMasterInitCloudBashScript(FormattedCloudInitShScript):
     . /etc/profile
     echo 'START=yes\nDAEMON_OPTS=""\n' > /etc/default/puppet
     sed -i 's|127.0.0.1|127.0.0.1 puppet|g' /etc/hosts
+
+
+    /etc/init.d/puppetmaster stop
+    /etc/init.d/puppet stop
+    echo "*" > /etc/puppet/autosign.conf
+    rm -fr /var/lib/puppet/ssl/*
+    /etc/init.d/puppetmaster start
     /etc/init.d/puppet start
 
-    echo "*" > /etc/puppet/autosign.conf
-    /etc/init.d/puppetmaster restart
-
-    puppet module install puppetlabs/puppetdb
+    puppet module install --target-dir /etc/puppet/modules/ puppetlabs/puppetdb
 
     #puppet apply /etc/puppet_scape_master.pp
 
