@@ -185,6 +185,11 @@ class PuppetMasterInitCloudBashScript(FormattedCloudInitShScript):
     echo 'START=yes\nDAEMON_OPTS=""\n' > /etc/default/puppet
     sed -i 's|127.0.0.1|127.0.0.1 puppet|g' /etc/hosts
 
+    SWAP_DISKS=$(blkid -s TYPE | grep -i swap | cut -d ":" -f 1)
+    for DSK in $SWAP_DISKS; do
+        swapon $DSK
+    done
+
 
     /etc/init.d/puppetmaster stop
     /etc/init.d/puppet stop
