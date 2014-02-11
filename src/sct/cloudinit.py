@@ -195,7 +195,7 @@ class PuppetMasterInitCloudBashScript(FormattedCloudInitShScript):
 
     puppet module install --target-dir /etc/puppet/modules/ puppetlabs/puppetdb
 
-    #puppet apply /etc/puppet_scape_master.pp
+
 
     mkdir -p /etc/scape/
     apt-get install -y git
@@ -207,6 +207,12 @@ class PuppetMasterInitCloudBashScript(FormattedCloudInitShScript):
 
 
     echo "*/10 * * * * /usr/bin/git --git-dir=/etc/scape/modules/.git --work-tree=/etc/scape/modules/  pull" >> /etc/crontab
+
+    puppet apply /etc/puppet_scape_master.pp
+
+    sleep 1
+    /etc/init.d/puppet restart
+
 
     """
 
