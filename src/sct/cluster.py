@@ -141,7 +141,8 @@ class ClusterController(BaseController):
         cluster_nodes_config["management_node"] = {'name': management_node_name,
                                                    'instance_id': node["instance_id"],
                                                    'ip': node["ip"],
-                                                   'private_ips': node["private_ips"]
+                                                   'private_ips': node["private_ips"],
+                                                   'hmac_secret': hmac_secret
         }
         return True
 
@@ -200,7 +201,7 @@ class ClusterController(BaseController):
                       template['max-node-count'], template_name)
             return False
 
-        mgmt_node_config = cluster_config.setdefault('nodes',{}).get('management_node', None)
+        mgmt_node_config = cluster_config.setdefault('nodes', {}).get('management_node', None)
         if mgmt_node_config is None:
             log.error("Invalid cluster. Management node is missing. Aborting")
             return False
@@ -219,7 +220,7 @@ class ClusterController(BaseController):
         if template_nodes_count == 0:
             node_index = 1
         else:
-            for idx in range(1, template_nodes_count+2):
+            for idx in range(1, template_nodes_count + 2):
                 desired_node_name = "%s_%s_%s" % (cluster_name, cloudInitHandler.shortName, idx)
                 if desired_node_name in node_names:
                     continue
