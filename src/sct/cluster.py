@@ -22,11 +22,16 @@ limitations under the License.
 import logging
 import pkg_resources
 import uuid
+import time
 from sct.controller import BaseController
 from sct.cloudinit import CloudInit, CloudConfig, DefaultPuppetCloudConfig, DefaultJavaCloudCloudConfig
 from sct.cloudinit import PuppetMasterCloudConfig, PuppetMasterInitCloudBashScript, CloudConfigStoreFile
+from sct.skapur import SkapurClient
 from sct.templates import get_template
+from sct.templates.base import generate_node_content
 
+
+SKAPUR_PORT = 8088
 
 class ClusterController(BaseController):
     def __init__(self, config, cloud_controller):
@@ -206,6 +211,8 @@ class ClusterController(BaseController):
             log.error("Invalid cluster. Management node is missing. Aborting")
             return False
         mgmt_node_privip = mgmt_node_config['private_ips']
+        mgmt_node_ip = mgmt_node_config['ip']
+        mgmt_node_hmac_secret = mgmt_node_config["hmac_secret"]
         if not mgmt_node_privip:
             log.error("Management does not seem to have any private IP's. Aborting!")
             return False
@@ -240,13 +247,39 @@ class ClusterController(BaseController):
             log.error("Failed to create node.")
             return False
 
+        private_name = node["private_dns"]
+
         cluster_config_nodes = cluster_config['nodes']
         cluster_config_nodes[desired_node_name] = {
             'name': desired_node_name,
             'instance_id': node["instance_id"],
             'ip': node["ip"],
             'private_ips': node["private_ips"],
+            'private_dns': node["private_dns"],
             'template': template_name
         }
+
+        skapur_url = "http://%s:%d" % (mgmt_node_ip, SKAPUR_PORT)
+        skapurClient = SkapurClient(secret=mgmt_node_hmac_secret, url=skapur_url)
+        start_time = time.time()
+        skapur_timeout = 120
+
+        if not skapurClient.isalive():
+            log.info("Management is not yet UP. Waiting %d seconds" % skapur_timeout)
+        current_duration = 0
+        while not skapurClient.isalive():
+            time.sleep(1)
+            current_time = time.time()
+            current_duration = current_time - start_time
+            if current_duration > skapur_timeout:
+                log.error("Failed to connect to management node in %d seconds", current_duration)
+                self.delete(desired_node_name)
+                return False
+        log.info("Connected to management server (%d seconds)", current_duration)
+        puppet_node_custom = ""
+        puppet_node_config = generate_node_content(private_name, cloudInitHandler.get_puppet_node_specification(private_name))
+        print puppet_node_config
+        puppet_node_file_name="%s.pp" % desired_node_name
+        skapurClient.store(puppet_node_file_name, puppet_node_config)
 
         return True

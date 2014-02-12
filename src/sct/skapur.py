@@ -66,6 +66,21 @@ class SkapurClient(object):
         url = opener.open(request)
         return url.read()
 
+    def isalive(self):
+        log = logging.getLogger("skapur.isalive")
+        try:
+            opener = urllib2.build_opener(urllib2.HTTPHandler)
+            request = urllib2.Request(self.url)
+            url = opener.open(request)
+            url.read()
+        except urllib2.HTTPError, e:
+            return True
+        except urllib2.URLError, e:
+            return False
+        return True
+
+
+
 
 if __name__ == "__main__":
     client = SkapurClient(secret="5fc0a568352e4213a5dfefb1f79fab6b",

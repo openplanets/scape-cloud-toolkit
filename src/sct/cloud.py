@@ -188,7 +188,8 @@ class CloudController(BaseController):
             'id': node.id,
             'name': node.name,
             'instance_id': node.extra['instance_id'],
-            'private_ips': node.private_ips
+            'private_ips': node.private_ips,
+            'private_dns': node.extra['private_dns']
         }
         if requested_autoallocate_address:
             addr = self.associate_address(instance_id=node.extra['instance_id'])
