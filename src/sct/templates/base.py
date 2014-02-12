@@ -55,7 +55,7 @@ class BaseTemplate(TemplateHandler, BaseHandler):
 
 class PuppetClientNode(BaseTemplate):
     setup_script = pkg_resources.resource_string(__name__, "resources/setup_puppet_agent.sh")
-
+    puppet_node = "default_node"
     def __init__(self, puppet_server, *args, **kwargs):
         BaseTemplate.__init__(self, *args, **kwargs)
 
@@ -86,6 +86,28 @@ class PuppetClientNode(BaseTemplate):
         self.cloud_config.set_option('apt_update', True) # Update the package list
         self.cloud_config.set_option('apt_upgrade',
                                      False) # Disable the Package upgrade. ToDo: This should be on by default
+
+    def get_puppet_node_specification(self, dns_name):
+        """This should return a tuple containing:
+        (parent_node, content)
+
+        -parent_node: the node that should be extended by the node specification
+        -content: the content of the node specification. It can be none
+        """
+        parent_node = self.puppet_node
+        return (parent_node, None)
+
+
+
+def generate_node_content(node_name, node_spec):
+    parent_node, node_content = node_spec
+    spec = "node %s " % node_name
+    if parent_node:
+        spec = "%s inherits %s" % (spec, parent_node)
+    if node_content is None:
+        node_content = ""
+    spec = "%s {  \n  %s \n}\n" % (spec, node_content)
+    return spec
 
 
 class DefaultNodeTemplate(PuppetClientNode):

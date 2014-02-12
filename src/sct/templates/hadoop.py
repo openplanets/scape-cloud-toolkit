@@ -21,15 +21,25 @@ limitations under the License.
 
 from sct.templates.base import DefaultNodeTemplate
 
+class HadoopNodeTemplate(DefaultNodeTemplate):
+    puppet_parent_node = None
+    def __init__(self, *args, **kwargs):
+        DefaultNodeTemplate.__init__(self, *args, **kwargs)
 
-class HadoopServer(DefaultNodeTemplate):
+
+    def get_puppet_node_specification(self, dns_name):
+        return (self.puppet_parent_node, "")
+
+class HadoopServer(HadoopNodeTemplate):
     shortName="hdpServer"
+    puppet_parent_node = "hadoop_server"
     def __init__(self, *args, **kwargs):
-        DefaultNodeTemplate.__init__(self, *args, **kwargs)
+        HadoopNodeTemplate.__init__(self, *args, **kwargs)
 
 
-class HadoopWorker(DefaultNodeTemplate):
+class HadoopWorker(HadoopNodeTemplate):
     shortName="hdpWorker"
+    puppet_parent_node = "hadoop_worker"
     def __init__(self, *args, **kwargs):
-        DefaultNodeTemplate.__init__(self, *args, **kwargs)
+        HadoopNodeTemplate.__init__(self, *args, **kwargs)
 
