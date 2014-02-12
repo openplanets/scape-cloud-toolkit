@@ -18,33 +18,22 @@ limitations under the License.
 @contact: marian@info.uvt.ro
 @copyright: 2014 Universitatea de Vest din Timișoara
 """
-from sct.taverna import TavernaServer
-
-from sct.templates.hadoop import HadoopServer, HadoopWorker
-
-TEMPLATES = {
-    'taverna-server': {
-        'max-node-count': None,
-        'cloudinit': TavernaServer
-    },
-    'hadoop-server': {
-        'max-node-count': 1,
-        'cloudinit': HadoopServer
-    },
-    'hadoop-worker': {
-        'max-node-count': None,
-        'cloudinit': HadoopWorker
-    }
-}
-
-def get_available_templates():
-    return TEMPLATES.keys()
-
-def get_template(name):
-    if name not in TEMPLATES:
-        raise NameError("No such template %s" % name)
-    else:
-        return TEMPLATES.get(name)
 
 
+from sct.templates.base import DefaultNodeTemplate
+
+class TavernaNodeTemplate(DefaultNodeTemplate):
+    puppet_parent_node = None
+    def __init__(self, *args, **kwargs):
+        DefaultNodeTemplate.__init__(self, *args, **kwargs)
+
+
+    def get_puppet_node_specification(self, dns_name):
+        return (self.puppet_parent_node, "")
+
+class TavernaServer(TavernaNodeTemplate):
+    shortName="tavernaServer"
+    puppet_parent_node = "taverna_server"
+    def __init__(self, *args, **kwargs):
+        TavernaNodeTemplate.__init__(self, *args, **kwargs)
 
