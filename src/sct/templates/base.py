@@ -101,7 +101,7 @@ class PuppetClientNode(BaseTemplate):
 
 def generate_node_content(node_name, node_spec):
     parent_node, node_content = node_spec
-    spec = "node %s " % node_name
+    spec = "node '%s' " % node_name
     if parent_node:
         spec = "%s inherits %s" % (spec, parent_node)
     if node_content is None:
