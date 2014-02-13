@@ -27,6 +27,8 @@ from logging.config import dictConfig
 import yaml
 import pkg_resources
 
+#import lockfile
+
 from sct.config import CONFIG_FILE, argparse_euca_helper
 from sct.config import ConfigFile
 from sct.cloud import CloudController
@@ -59,7 +61,10 @@ class ControllerWrapper(object):
                         passed_args = self._filter_args(args)
                         if args.disable_ssl_check:
                             outer_obj.disable_ssl_check()
-                        print getattr(outer_obj, item)(**passed_args)
+                        func = getattr(outer_obj, item)
+                        func_is_read_only = getattr(func, "read_only", False)
+
+                        print func(**passed_args)
                         cfg.store_config(args.config_file)
 
                     return __args_wrapper
@@ -273,7 +278,6 @@ def main():
     args = parser.parse_args()
 
     # Setup logging
-    import yaml
 
     if args.logging_config is None:
         logging_config_stream = pkg_resources.resource_stream(__name__, "logging.yaml")

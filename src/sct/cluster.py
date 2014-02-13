@@ -278,7 +278,6 @@ class ClusterController(BaseController):
         log.info("Connected to management server (%d seconds)", current_duration)
         puppet_node_custom = ""
         puppet_node_config = generate_node_content(private_name, cloudInitHandler.get_puppet_node_specification(private_name))
-        print puppet_node_config
         puppet_node_file_name="%s.pp" % desired_node_name
         skapurClient.store(puppet_node_file_name, puppet_node_config)
 

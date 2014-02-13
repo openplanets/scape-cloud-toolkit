@@ -18,6 +18,7 @@ limitations under the License.
 @contact: marian@info.uvt.ro
 @copyright: 2014 Universitatea de Vest din Timișoara
 """
+
 from email.mime.multipart import MIMEMultipart
 from sct.cloudinit import BaseHandler, FormattedCloudInitShScript, CloudConfig
 
