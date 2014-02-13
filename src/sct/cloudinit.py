@@ -209,8 +209,7 @@ class PuppetMasterInitCloudBashScript(FormattedCloudInitShScript):
     /etc/init.d/puppet start
 
     puppet module install --target-dir /etc/puppet/modules/ puppetlabs/puppetdb
-
-
+    #puppet module install --target-dir /etc/puppet/modules/ puppetlabs/dashboard
 
     mkdir -p /etc/scape/
     apt-get install -y git
