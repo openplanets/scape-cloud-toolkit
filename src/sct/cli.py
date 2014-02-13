@@ -64,7 +64,8 @@ class ControllerWrapper(object):
                         func = getattr(outer_obj, item)
                         func_is_read_only = getattr(func, "read_only", False)
 
-                        print func(**passed_args)
+                        result = func(**passed_args)
+                        yaml.dump(result, sys.stdout, default_flow_style=False)
                         cfg.store_config(args.config_file)
 
                     return __args_wrapper
