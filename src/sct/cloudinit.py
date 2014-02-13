@@ -190,16 +190,14 @@ class PuppetMasterInitCloudBashScript(FormattedCloudInitShScript):
         swapon $DSK
     done
 
-
     curl -o /usr/local/bin/skapur http://ftp.info.uvt.ro/projects/scape/tools/skapur/skapur
     chmod +x /usr/local/bin/skapur
     mkdir -p /etc/puppet/manifests/nodes/
-    chown puppet /etc/puppet/manifests/nodes/
+    touch /etc/puppet/manifests/nodes/dummy.pp
+    chown -R puppet /etc/puppet/manifests/nodes/
     ln -s /etc/scape/modules/sct/files/templates /etc/puppet/manifests/templates
     ln -s /etc/scape/modules/sct/files/site.pp /etc/puppet/manifests/site.pp
     screen -A -m -d -S skapurpuppet sudo -u puppet /usr/local/bin/skapur  -address="0.0.0.0:8088" -store /etc/puppet/manifests/nodes/ -secret "@HMACSECREET"
-
-
 
     /etc/init.d/puppetmaster stop
     /etc/init.d/puppet stop
@@ -214,16 +212,14 @@ class PuppetMasterInitCloudBashScript(FormattedCloudInitShScript):
     mkdir -p /etc/scape/
     apt-get install -y git
     git clone @URL /etc/scape/modules
+    cd /etc/scape/modules
+    git submodule init && git submodule update
 
     echo "*/10 * * * * /usr/bin/git --git-dir=/etc/scape/modules/.git --work-tree=/etc/scape/modules/  pull" >> /etc/crontab
 
     puppet apply /etc/puppet_scape_master.pp
 
-    sleep 1
     /etc/init.d/puppet restart
-
-
-
 
     """
 
