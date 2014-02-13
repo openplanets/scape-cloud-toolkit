@@ -282,3 +282,8 @@ class ClusterController(BaseController):
         skapurClient.store(puppet_node_file_name, puppet_node_config)
 
         return True
+
+    def list_clusters(self):
+        cluster_config = self.clusters_config
+        clusters = cluster_config.keys()
+        return  clusters
