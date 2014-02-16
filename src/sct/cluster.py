@@ -27,7 +27,7 @@ from sct.controller import BaseController
 from sct.cloudinit import CloudInit, CloudConfig, DefaultPuppetCloudConfig, DefaultJavaCloudCloudConfig
 from sct.cloudinit import PuppetMasterCloudConfig, PuppetMasterInitCloudBashScript, CloudConfigStoreFile
 from sct.skapur import SkapurClient
-from sct.templates import get_template
+from sct.templates import get_template, get_available_templates
 from sct.templates.base import generate_node_content
 
 
@@ -147,7 +147,8 @@ class ClusterController(BaseController):
                                                    'instance_id': node["instance_id"],
                                                    'ip': node["ip"],
                                                    'private_ips': node["private_ips"],
-                                                   'hmac_secret': hmac_secret
+                                                   'hmac_secret': hmac_secret,
+                                                   'puppet-module-repository': requested_module_repository_url
         }
         return True
 
@@ -287,3 +288,49 @@ class ClusterController(BaseController):
         cluster_config = self.clusters_config
         clusters = cluster_config.keys()
         return  clusters
+
+    def info(self, cluster_name):
+        log = logging.getLogger("cluster.info")
+        clusters_config = self.clusters_config
+        if cluster_name not in clusters_config:
+            log.error("No such cluster `%s` !", cluster_name)
+            return False
+
+        cluster_config = clusters_config[cluster_name]
+        config_nodes = cluster_config["nodes"]
+        mgmt_node_ip = config_nodes.get("management_node", {}).get('ip', None)
+        module_repository_url = config_nodes.get("management_node", {}).get('puppet-module-repository', None)
+
+        result = {}
+        templates = {}
+        result['global'] = {}
+        result['templates'] = templates
+        if mgmt_node_ip:
+            result["global"]['puppetdb']= 'http://%s:8080/dashboard/index.html' % mgmt_node_ip
+        if module_repository_url:
+            result["global"]["module-repository"] = module_repository_url
+
+        available_templates = get_available_templates()
+        for tmpl in available_templates:
+            template = get_template(tmpl)
+            tmpl_nodes = self.get_template_nodes(cluster_config, tmpl)
+            if tmpl_nodes:
+                tmpl_nodes_info = []
+                templates[tmpl] = {
+                    'count': len(tmpl_nodes),
+                    'nodes': tmpl_nodes_info
+                }
+                for node in tmpl_nodes:
+                    node_name, node_info = node
+                    node_ip = node_info.get("ip", None)
+                    ports = {}
+                    entry = {'ip': node_ip}
+                    if 'ports' in template:
+                        entry["ports"] = template["ports"]
+                    tmpl_nodes_info.append(entry)
+
+
+        #print cluster_config
+        return result
+
+

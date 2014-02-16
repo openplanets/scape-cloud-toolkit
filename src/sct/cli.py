@@ -277,6 +277,9 @@ def main():
     list_cluster_parser = cluster_subparsers.add_parser("list-clusters")
     list_cluster_parser.set_defaults(func=cc.cluster.list_clusters(cfg))
 
+    info_cluster_parser = cluster_subparsers.add_parser("info")
+    info_cluster_parser.add_argument("--cluster-name", required=True, help="Cluster Name")
+    info_cluster_parser.set_defaults(func=cc.cluster.info(cfg))
 
     ###### Handle
     args = parser.parse_args()
