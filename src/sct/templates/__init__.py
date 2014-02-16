@@ -25,11 +25,17 @@ from sct.templates.hadoop import HadoopServer, HadoopWorker
 TEMPLATES = {
     'taverna-server': {
         'max-node-count': None,
-        'cloudinit': TavernaServer
+        'cloudinit': TavernaServer,
+        'ports': {
+            '8443': "Taverna Server"
+        }
     },
     'hadoop-server': {
         'max-node-count': 1,
-        'cloudinit': HadoopServer
+        'cloudinit': HadoopServer,
+        'ports': {
+            '8088': 'Hadoop Jobs'
+        }
     },
     'hadoop-worker': {
         'max-node-count': None,
