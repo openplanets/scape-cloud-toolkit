@@ -189,15 +189,19 @@ class PuppetMasterInitCloudBashScript(FormattedCloudInitShScript):
     for DSK in $SWAP_DISKS; do
         swapon $DSK
     done
+    SK=/usr/local/bin/skapur
+    RP=/usr/local/bin/reload-puppet-master
 
-    curl -o /usr/local/bin/skapur http://ftp.info.uvt.ro/projects/scape/tools/skapur/skapur
-    chmod +x /usr/local/bin/skapur
+    curl -o ${SK} http://ftp.info.uvt.ro/projects/scape/tools/skapur/skapur
+    chmod +x ${SK}
     mkdir -p /etc/puppet/manifests/nodes/
     touch /etc/puppet/manifests/nodes/dummy.pp
     chown -R puppet /etc/puppet/manifests/nodes/
     ln -s /etc/scape/modules/sct/files/templates /etc/puppet/manifests/templates
     ln -s /etc/scape/modules/sct/files/site.pp /etc/puppet/manifests/site.pp
-    screen -A -m -d -S skapurpuppet sudo -u puppet /usr/local/bin/skapur  -address="0.0.0.0:8088" -store /etc/puppet/manifests/nodes/ -secret "@HMACSECREET"
+    echo ${RP}
+    chmod +x ${RP}
+    screen -A -m -d -S skapurpuppet sudo -u puppet ${SK} -hook=${RP} -address="0.0.0.0:8088" -store /etc/puppet/manifests/nodes/ -secret "@HMACSECREET"
 
     /etc/init.d/puppetmaster stop
     /etc/init.d/puppet stop
@@ -206,8 +210,8 @@ class PuppetMasterInitCloudBashScript(FormattedCloudInitShScript):
     /etc/init.d/puppetmaster start
     /etc/init.d/puppet start
 
+    echo -e "#!/bin/bash\n/etc/init.d/puppetmaster restart" > ${RP}
     puppet module install --target-dir /etc/puppet/modules/ puppetlabs/puppetdb
-    #puppet module install --target-dir /etc/puppet/modules/ puppetlabs/dashboard
 
     mkdir -p /etc/scape/
     apt-get install -y git
