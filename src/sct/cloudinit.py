@@ -218,13 +218,9 @@ class PuppetMasterInitCloudBashScript(FormattedCloudInitShScript):
     git clone @URL /etc/scape/modules
     cd /etc/scape/modules
     git submodule init && git submodule update
-
     echo "*/10 * * * * /usr/bin/git --git-dir=/etc/scape/modules/.git --work-tree=/etc/scape/modules/  pull" >> /etc/crontab
-
     puppet apply /etc/puppet_scape_master.pp
-
     /etc/init.d/puppet restart
-
     """
 
     def __init__(self, **kwargs):
