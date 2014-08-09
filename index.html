@@ -1,70 +1,78 @@
 <!doctype html>
+<!--
+
+  Instructions:
+
+  - Save this file.
+  - Replace "USER" with your GitHub username.
+  - Replace "REPO" with your GitHub repo name.
+  - Replace "Your Project" with your project name.
+  - Upload this file (or commit to GitHub Pages).
+
+  Customize as you see fit!
+
+-->
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Scape-cloud-toolkit by mneagul</title>
+<head>
+  <meta charset='utf-8'>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width">
 
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <script src="javascripts/scale.fix.js"></script>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>xcorrSound</title>
 
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-  </head>
-  <body>
-    <div class="wrapper">
-      <header class="without-description">
-        <h1>Scape-cloud-toolkit</h1>
-        <p></p>
-        <p class="view"><a href="https://github.com/mneagul/scape-cloud-toolkit">View the Project on GitHub <small>mneagul/scape-cloud-toolkit</small></a></p>
-        <ul>
-          <li><a href="https://github.com/mneagul/scape-cloud-toolkit/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/mneagul/scape-cloud-toolkit/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/mneagul/scape-cloud-toolkit">View On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
-      <section>
-        <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+  <!-- Flatdoc -->
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script src='http://rstacruz.github.io/flatdoc/v/0.8.0/legacy.js'></script>
+  <script src='http://rstacruz.github.io/flatdoc/v/0.8.0/flatdoc.js'></script>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+  <!-- Flatdoc theme -->
+  <link  href='css/style.css' rel='stylesheet'>
+  <script src='http://rstacruz.github.io/flatdoc/v/0.8.0/theme-white/script.js'></script>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
+  <!-- Meta -->
+  <link type="image/x-icon" href="http://www.scape-project.eu/wp-content/themes/medani/images/favicon.ico" rel="shortcut icon" />
+  <meta content="scape-cloud-toolkit" property="og:title">
+  <meta content="About the scape-cloud-toolkit project." name="description">
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
-
-<h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
-
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
-
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
-
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
-
-<h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
-
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
-
-<h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
-
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
-      </section>
-    </div>
-    <footer>
-      <p>Project maintained by <a href="https://github.com/mneagul">mneagul</a></p>
-      <p>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></p>
-    </footer>
-    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+  <!-- Initializer -->
+  <script>
+    var pageUpdate = {
+      loadContent : function(file) {
+        Flatdoc.run({
+          fetcher: Flatdoc.github('mneagul/scape-cloud-toolkit', file)
+        })
+      }
+    };
     
-  </body>
+    pageUpdate.loadContent('ABOUT.md')
+  </script>
+</head>
+<body class='no-literate' role='flatdoc'>
+
+  <div class='header'>
+    <div class='left'>
+      <h1>xcorrSound</h1>
+      <ul>
+        <li><a href="#" onClick="pageUpdate.loadContent('ABOUT.md'); return false;">About</a></li>
+        <li><a href="#" onClick="pageUpdate.loadContent('README.md'); return false;">Usage</a></li>
+        <li><a href="#" onClick="pageUpdate.loadContent('CONTRIBUTE.md'); return false;">Contribute</a></li>
+        <li><a href="https://github.com/openplanets/scape-cloud-toolkit" target="_blank">View on GitHub</a></li>
+        <li><a href="https://github.com/openplanets/scape-cloud-toolkit/issues" target="_blank">Issues</a></li>
+      </ul>
+    </div>
+    <div class='right'>
+      <!-- GitHub buttons: see http://ghbtns.com -->
+      <iframe src="https://cdn.rawgit.com/mdo/github-buttons/master/github-btn.html?user=openplanets&amp;repo=scape-xcorrsound&amp;type=watch&amp;count=true" allowtransparency="true" frameborder="0" scrolling="0" width="110" height="20"></iframe>
+    </div>
+  </div>
+
+  <div class='content-root'>
+    <div class='menubar'>
+      <img class='scape-logo' src="img/scape-logo.png"></img>
+      <div class='menu section' role='flatdoc-menu'></div>
+    </div>
+    <div role='flatdoc-content' class='content'></div>
+  </div>
+
+</body>
 </html>
