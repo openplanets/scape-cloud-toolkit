@@ -26,7 +26,7 @@ Before proceding with the **SCAPE Cloud Toolkit** you have to setup you credenti
 
 ### Automatically
 1. Load the *eucarc* file: `. ~/euca/eucarc` (change depending on the location of eucarc)
-2. Call the auto configuration command: `~/scape/bin/sct-cli -vvvvv cloud-config euca --autoconfig`
+2. Call the auto configuration command: `~/scape/bin/sct-cli -vvvvv cloud-config euca --autodetect`
 
 ### Manual
 See: `~/scape/bin/sct-cli -vvvvv cloud-config euca -h`
